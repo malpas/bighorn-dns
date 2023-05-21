@@ -10,7 +10,7 @@ namespace bighorn
 
 struct Hostname
 {
-    std::vector<std::string> subdomains;
+    std::vector<std::string> labels;
 };
 
 [[nodiscard]] std::error_code parse_hostname(const std::string &hostname, Hostname &domain);

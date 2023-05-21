@@ -8,7 +8,8 @@ namespace bighorn
 enum class HostnameError
 {
     Empty = 1,
-    InvalidCharacter
+    InvalidCharacter,
+    TooLong
 };
 
 struct HostnameErrorCategory : std::error_category

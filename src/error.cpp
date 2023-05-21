@@ -16,6 +16,8 @@ std::string HostnameErrorCategory::message(int ev) const
         return "empty host name";
     case HostnameError::InvalidCharacter:
         return "invalid character";
+    case HostnameError::TooLong:
+        return "too long";
     default:
         return "unknown error";
     }

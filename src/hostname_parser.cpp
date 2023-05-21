@@ -9,8 +9,10 @@ namespace bighorn
 
 bool valid_subdomain_char(char c)
 {
-    return (std::isalnum(c) != 0) || c == '-';
+    return std::isalnum(c) || c == '-';
 }
+
+const int max_hostname_len = 24;
 
 std::error_code parse_hostname(const std::string &hostname, Hostname &domain)
 {
@@ -19,13 +21,12 @@ std::error_code parse_hostname(const std::string &hostname, Hostname &domain)
         return HostnameError::Empty;
     }
 
-    std::vector<std::string> subdomains;
+    std::vector<std::string> labels;
     int i = 0;
     while (true)
     {
         std::stringstream ss;
-
-        if (!valid_subdomain_char(hostname[i]))
+        if (!std::isalpha(hostname[i]))
         {
             return HostnameError::InvalidCharacter;
         }
@@ -41,14 +42,18 @@ std::error_code parse_hostname(const std::string &hostname, Hostname &domain)
             ss << hostname[i];
             ++i;
         }
-        subdomains.push_back(ss.str());
+        labels.push_back(ss.str());
         if (i == hostname.size())
         {
             break;
         }
         ++i;
     }
-    domain = Hostname{.subdomains = subdomains};
+    if (i > max_hostname_len)
+    {
+        return HostnameError::TooLong;
+    }
+    domain = Hostname{.labels = labels};
     return {};
 }
 
