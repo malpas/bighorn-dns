@@ -19,13 +19,36 @@ std::string HostnameErrorCategory::message(int ev) const
     case HostnameError::TooLong:
         return "too long";
     default:
-        return "unknown error";
+        return "unknown hostname error";
+    }
+}
+
+const char *MessageErrorCategory::name() const noexcept
+{
+    return "message_error";
+}
+
+std::string MessageErrorCategory::message(int ev) const
+{
+    switch (static_cast<MessageError>(ev))
+    {
+    case MessageError::ReadError:
+        return "could not read from stream";
+    case MessageError::Eof:
+        return "end of file";
+    default:
+        return "unknown message error";
     }
 }
 
 std::error_code make_error_code(HostnameError e)
 {
     return {static_cast<int>(e), hostnameErrCategory};
+}
+
+std::error_code make_error_code(MessageError e)
+{
+    return {static_cast<int>(e), msgErrCategory};
 }
 
 } // namespace bighorn
