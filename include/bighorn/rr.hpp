@@ -76,7 +76,7 @@ template <typename SyncReadStream>
 }
 
 template <typename SyncReadStream>
-[[nodiscard]] std::error_code read_uint8(SyncReadStream &stream, asio::streambuf &buf, uint8_t &out)
+[[nodiscard]] std::error_code read_byte(SyncReadStream &stream, asio::streambuf &buf, uint8_t &out)
 {
     auto err = read_n(stream, buf, 1, reinterpret_cast<char *>(&out));
     if (err)
@@ -86,27 +86,22 @@ template <typename SyncReadStream>
     return {};
 }
 
-template <typename SyncReadStream>
-[[nodiscard]] std::error_code read_uint16(SyncReadStream &stream, asio::streambuf &buf, uint16_t &out)
+template <typename SyncReadStream, typename T>
+[[nodiscard]] std::error_code read_number(SyncReadStream &stream, asio::streambuf &buf, T &out)
 {
-    auto err = read_n(stream, buf, 2, reinterpret_cast<char *>(&out));
+    auto err = read_n(stream, buf, sizeof(T), reinterpret_cast<char *>(&out));
     if (err)
     {
         return err;
     }
-    out = ntohs(out);
-    return {};
-}
-
-template <typename SyncReadStream>
-[[nodiscard]] std::error_code read_uint32(SyncReadStream &stream, asio::streambuf &buf, uint32_t &out)
-{
-    auto err = read_n(stream, buf, 4, reinterpret_cast<char *>(&out));
-    if (err)
+    if constexpr (sizeof(T) == 2)
     {
-        return err;
+        out = ntohs(out);
     }
-    out = ntohl(out);
+    else
+    {
+        out = ntohl(out);
+    }
     return {};
 }
 
@@ -122,7 +117,7 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_rr(SyncRea
     rr.labels = std::vector<std::string>{};
     do
     {
-        asio_err = read_uint8(stream, buf, label_len);
+        asio_err = read_byte(stream, buf, label_len);
         if (asio_err)
         {
             return asio_err;
@@ -141,28 +136,28 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_rr(SyncRea
     } while (label_len > 0);
 
     uint16_t bytes;
-    asio_err = read_uint16(stream, buf, bytes);
+    asio_err = read_number(stream, buf, bytes);
     if (asio_err)
     {
         return asio_err;
     }
     rr.type = static_cast<RrType>(bytes);
-    asio_err = read_uint16(stream, buf, bytes);
+
+    asio_err = read_number(stream, buf, bytes);
     if (asio_err)
     {
         return asio_err;
     }
     rr.cls = static_cast<RrClass>(bytes);
-    asio_err = read_uint16(stream, buf, bytes);
 
-    asio_err = read_uint32(stream, buf, rr.ttl);
+    asio_err = read_number(stream, buf, rr.ttl);
     if (asio_err)
     {
         return asio_err;
     }
 
     uint16_t rdlength;
-    asio_err = read_uint16(stream, buf, rdlength);
+    asio_err = read_number(stream, buf, rdlength);
     rr.rdata = std::string(rdlength, '\0');
     asio_err = read_n(stream, buf, rdlength, rr.rdata.data());
     return {};
