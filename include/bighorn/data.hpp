@@ -51,6 +51,7 @@ struct Rr
     std::string rdata;
 
     std::vector<uint8_t> bytes();
+    bool operator==(const Rr &) const = default;
 };
 
 namespace
@@ -179,6 +180,7 @@ struct Header
     uint16_t arcount;
 
     std::vector<uint8_t> bytes();
+    bool operator==(const Header &) const = default;
 };
 
 template <typename SyncReadStream> [[nodiscard]] std::error_code read_header(SyncReadStream &stream, Header &header)
@@ -235,6 +237,7 @@ struct Question
     std::vector<std::string> labels;
     uint16_t qtype;
     uint16_t qclass;
+    auto operator<=>(const Question &) const = default;
 };
 
 struct Message
@@ -244,6 +247,7 @@ struct Message
     std::vector<Rr> answers;
     std::vector<Rr> authorities;
     std::vector<Rr> additional;
+    bool operator==(const Message &) const = default;
 };
 
 } // namespace bighorn
