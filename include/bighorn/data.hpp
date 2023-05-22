@@ -14,39 +14,43 @@
 namespace bighorn
 {
 
-enum class RrType : uint16_t
+enum class DnsType : uint16_t
 {
-    HostAddress = 1,
-    AuthoritativeNameServer = 2,
-    MailDestination = 3,
-    MailForwarder = 4,
-    CanonicalAlias = 5,
-    ZoneStart = 6,
-    MailboxDomain = 7,
-    MailGroupMember = 8,
-    MailRenameDomain = 9,
+    A = 1,
+    Ns = 2,
+    Md = 3,
+    Mf = 4,
+    Cname = 5,
+    Soa = 6,
+    Mb = 7,
+    Mg = 8,
+    Mr = 9,
     Null = 10,
-    WellKnownService = 11,
-    DomainNamePointer = 12,
-    HostInformation = 13,
-    Mailbox = 14,
-    MailExchange = 15,
-    TextStrings = 16
+    Wks = 11,
+    Ptr = 12,
+    Hinfo = 13,
+    Minfo = 14,
+    Mx = 15,
+    Txt = 16,
+    Axfr = 252,  // QTYPE
+    Mailb = 253, // QTYPE
+    MailA = 254, // QTYPE
+    All = 255,   // QTYPE
 };
 
-enum class RrClass : uint16_t
+enum class DnsClass : uint16_t
 {
-    Internet = 1,
-    Csnet = 2,
-    Chaos = 3,
-    Hesiod = 4
+    In = 1,
+    Cs = 2,
+    Ch = 3,
+    Hs = 4
 };
 
 struct Rr
 {
     std::vector<std::string> labels;
-    RrType type;
-    RrClass cls;
+    DnsType type;
+    DnsClass cls;
     uint32_t ttl;
     std::string rdata;
 
@@ -139,14 +143,14 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_rr(SyncRea
     {
         return asio_err;
     }
-    rr.type = static_cast<RrType>(bytes);
+    rr.type = static_cast<DnsType>(bytes);
 
     asio_err = read_number(stream, buf, bytes);
     if (asio_err)
     {
         return asio_err;
     }
-    rr.cls = static_cast<RrClass>(bytes);
+    rr.cls = static_cast<DnsClass>(bytes);
 
     asio_err = read_number(stream, buf, rr.ttl);
     if (asio_err)
@@ -235,8 +239,8 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_header(Syn
 struct Question
 {
     std::vector<std::string> labels;
-    uint16_t qtype;
-    uint16_t qclass;
+    DnsType qtype;
+    DnsClass qclass;
     auto operator<=>(const Question &) const = default;
 };
 

@@ -42,8 +42,8 @@ TEST(InputTest, FullSimpleRr)
     auto err = bighorn::read_rr(stream_tester, rr);
     ASSERT_FALSE(err);
     ASSERT_THAT(rr.labels, testing::ElementsAre("example", "com"));
-    EXPECT_EQ(rr.type, bighorn::RrType::HostAddress);
-    EXPECT_EQ(rr.cls, bighorn::RrClass::Internet);
+    EXPECT_EQ(rr.type, bighorn::DnsType::A);
+    EXPECT_EQ(rr.cls, bighorn::DnsClass::In);
     EXPECT_EQ(rr.ttl, 3600);
     EXPECT_EQ(rr.rdata, "\1\2\3\4");
 }

@@ -5,8 +5,8 @@
 #include <bighorn/data.hpp>
 
 static bighorn::Rr example_rr = {.labels = {"example", "com"},
-                                  .type = bighorn::RrType::HostAddress,
-                                  .cls = bighorn::RrClass::Internet,
+                                  .type = bighorn::DnsType::A,
+                                  .cls = bighorn::DnsClass::In,
                                   .ttl = 3600,
                                   .rdata = ""};
 
