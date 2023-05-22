@@ -20,7 +20,7 @@ class StreamTester
 
     template <typename MutableBufferSequence> size_t read_some(MutableBufferSequence mb, std::error_code &ec)
     {
-        if (is_read)
+        if (data.size() == 0 || is_read)
         {
             ec = asio::error::eof;
             return 0;

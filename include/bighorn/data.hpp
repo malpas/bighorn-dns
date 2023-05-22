@@ -57,19 +57,14 @@ namespace
 template <typename SyncReadStream>
 [[nodiscard]] std::error_code read_n(SyncReadStream &stream, asio::streambuf &buf, int n, char *out)
 {
-    if (buf.in_avail() >= n)
-    {
-        buf.commit(n);
-    }
-    else
+    if (buf.in_avail() < n)
     {
         std::error_code asio_err;
-        auto count = asio::read(stream, buf, asio::transfer_at_least(n), asio_err);
+        asio::read(stream, buf, asio::transfer_at_least(n - buf.in_avail()), asio_err);
         if (asio_err)
         {
             return asio_err;
         }
-        buf.commit(count);
     }
     buf.sgetn(out, n);
     return {};
@@ -162,5 +157,80 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_rr(SyncRea
     asio_err = read_n(stream, buf, rdlength, rr.rdata.data());
     return {};
 }
+
+struct Header
+{
+    uint16_t id;
+
+    uint16_t qr : 1;
+    uint16_t opcode : 4;
+    uint16_t aa : 1;
+    uint16_t tc : 1;
+    uint16_t rd : 1;
+    uint16_t ra : 1;
+    uint16_t z : 3;
+    uint16_t rcode : 4;
+
+    uint16_t qdcount;
+    uint16_t ancount;
+    uint16_t nscount;
+    uint16_t arcount;
+};
+
+template <typename SyncReadStream> [[nodiscard]] std::error_code read_header(SyncReadStream &stream, Header &header)
+{
+    std::error_code asio_err;
+    asio::streambuf buf;
+    buf.prepare(512);
+    asio_err = read_number(stream, buf, header.id);
+    if (asio_err)
+    {
+        return asio_err;
+    }
+
+    uint16_t meta = 0;
+    asio_err = read_number(stream, buf, meta);
+    if (asio_err)
+    {
+        return asio_err;
+    }
+    header.qr = meta >> 15 & 1;
+    header.opcode = meta >> 11 & 0b1111;
+    header.aa = meta >> 10 & 1;
+    header.tc = meta >> 9 & 1;
+    header.rd = meta >> 8 & 1;
+    header.ra = meta >> 7 & 1;
+    header.z = meta >> 4 & 0b111;
+    header.rcode = meta & 0b1111;
+
+    asio_err = read_number(stream, buf, header.qdcount);
+    if (asio_err)
+    {
+        return asio_err;
+    }
+    asio_err = read_number(stream, buf, header.ancount);
+    if (asio_err)
+    {
+        return asio_err;
+    }
+    asio_err = read_number(stream, buf, header.nscount);
+    if (asio_err)
+    {
+        return asio_err;
+    }
+    asio_err = read_number(stream, buf, header.arcount);
+    if (asio_err)
+    {
+        return asio_err;
+    }
+    return {};
+}
+
+struct Question
+{
+    std::vector<std::string> labels;
+    uint16_t qtype;
+    uint16_t qclass;
+};
 
 } // namespace bighorn
