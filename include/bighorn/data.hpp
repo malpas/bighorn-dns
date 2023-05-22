@@ -49,6 +49,8 @@ struct Rr
     RrClass cls;
     uint32_t ttl;
     std::string rdata;
+
+    std::vector<uint8_t> bytes();
 };
 
 namespace
@@ -175,6 +177,8 @@ struct Header
     uint16_t ancount;
     uint16_t nscount;
     uint16_t arcount;
+
+    std::vector<uint8_t> bytes();
 };
 
 template <typename SyncReadStream> [[nodiscard]] std::error_code read_header(SyncReadStream &stream, Header &header)
@@ -233,8 +237,8 @@ struct Question
     uint16_t qclass;
 };
 
-
-struct Message {
+struct Message
+{
     Header header;
     std::vector<Question> questions;
     std::vector<Rr> answers;
