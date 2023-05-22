@@ -233,4 +233,13 @@ struct Question
     uint16_t qclass;
 };
 
+
+struct Message {
+    Header header;
+    std::vector<Question> questions;
+    std::vector<Rr> answers;
+    std::vector<Rr> authorities;
+    std::vector<Rr> additional;
+};
+
 } // namespace bighorn
