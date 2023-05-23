@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <resolver.hpp>
 
 namespace bighorn
@@ -5,22 +6,43 @@ namespace bighorn
 
 Message bighorn::Resolver::resolve(const Message &query)
 {
-    Message response = query;
+    Message response;
+    response.header = query.header;
     response.header.qr = 1;
     response.header.aa = 1;
-    bighorn::Rr answer1{.labels = {"sri-nic", "arpa"},
-                         .type = bighorn::DnsType::A,
-                         .cls = bighorn::DnsClass::In,
-                         .ttl = 86400,
-                         .rdata = "\x1a\x00\x00\x49"};
-    bighorn::Rr answer2{.labels = {"sri-nic", "arpa"},
-                         .type = bighorn::DnsType::A,
-                         .cls = bighorn::DnsClass::In,
-                         .ttl = 86400,
-                         .rdata = "\x0a\x00\x00\x33"};
-    std::vector<bighorn::Rr> answers{answer1, answer2};
-    response.answers = std::move(answers);
+    for (auto &question : query.questions)
+    {
+        auto records = resolve_question(question);
+        std::copy(records.begin(), records.end(), std::back_inserter(response.answers));
+    }
     return response;
+}
+
+bool is_wildcard(std::string s)
+{
+    return s != "*";
+}
+
+std::vector<Rr> Resolver::resolve_question(const Question &question)
+{
+    std::vector<Rr> matching_records;
+    for (auto &record : records)
+    {
+        if (record.labels.size() != question.labels.size())
+        {
+            continue;
+        }
+        for (int i = 0; i < question.labels.size(); ++i)
+        {
+            if (record.labels[i] != question.labels[i] && !is_wildcard(record.labels[i]))
+            {
+                goto no_match;
+            }
+        }
+        matching_records.push_back(record);
+    no_match:;
+    }
+    return matching_records;
 }
 
 } // namespace bighorn

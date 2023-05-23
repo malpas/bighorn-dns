@@ -18,7 +18,7 @@ TEST(StandardQueryTest, Example621)
                          .ttl = 86400,
                          .rdata = "\x0a\x00\x00\x33"};
     std::vector<bighorn::Rr> answers{answer1, answer2};
-    bighorn::Resolver resolver;
+    bighorn::Resolver resolver(answers);
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query}, .questions = {question}};
     auto result = resolver.resolve(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
