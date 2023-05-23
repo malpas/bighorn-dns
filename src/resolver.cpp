@@ -9,34 +9,54 @@ Message bighorn::Resolver::resolve(const Message &query) {
     response.header.qr = 1;
     response.header.aa = 1;
     for (auto &question : query.questions) {
-        auto records_ = resolve_question(question);
-        std::copy(records_.begin(), records_.end(),
+        auto records = resolve_question(question);
+        std::copy(records.begin(), records.end(),
                   std::back_inserter(response.answers));
+        if (question.qtype == DnsType::Mx) {
+            add_additional_records_for_mx(question.labels, response);
+        }
     }
     return response;
 }
 
-bool is_wildcard(std::string s) { return s != "*"; }
+bool is_wildcard(const std::string &s) { return s != "*"; }
+
+bool is_label_match(const std::vector<std::string> &labels,
+                    const Rr &candidate) {
+    if (labels.size() != candidate.labels.size()) {
+        return false;
+    }
+    for (int i = 0; i < labels.size(); ++i) {
+        if (labels[i] != candidate.labels[i] && !is_wildcard(labels[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 
 std::vector<Rr> Resolver::resolve_question(const Question &question) {
     std::vector<Rr> matching_records;
-    for (auto &record : records_) {
-        if (question.qtype != record.type && question.qtype != DnsType::All) {
+    for (auto &candidate : records_) {
+        if (question.qtype != candidate.type &&
+            question.qtype != DnsType::All) {
             continue;
         }
-        if (record.labels.size() != question.labels.size()) {
+        if (!is_label_match(question.labels, candidate)) {
             continue;
         }
-        for (int i = 0; i < question.labels.size(); ++i) {
-            if (record.labels[i] != question.labels[i] &&
-                !is_wildcard(record.labels[i])) {
-                goto no_match;
-            }
-        }
-        matching_records.push_back(record);
-    no_match:;
+        matching_records.push_back(candidate);
     }
     return matching_records;
+}
+
+void Resolver::add_additional_records_for_mx(
+    const std::vector<std::string> &labels, Message &response) {
+    for (auto &record : records_) {
+        if (is_label_match(record.labels, record) &&
+            record.type == DnsType::A) {
+            response.additional.push_back(record);
+        }
+    }
 }
 
 }  // namespace bighorn

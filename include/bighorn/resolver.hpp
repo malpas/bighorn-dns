@@ -14,6 +14,8 @@ class Resolver {
    private:
     std::vector<Rr> records_;
     std::vector<Rr> resolve_question(const Question &);
+    void add_additional_records_for_mx(const std::vector<std::string> &labels,
+                                       Message &response);
 };
 
 }  // namespace bighorn
