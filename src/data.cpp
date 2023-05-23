@@ -4,7 +4,8 @@ namespace bighorn {
 
 std::vector<uint8_t> Header::bytes() {
     uint16_t meta = qr << 15 | static_cast<uint16_t>(opcode) << 11 | aa << 10 |
-                    tc << 9 | rd << 8 | ra << 7 | z << 4 | rcode;
+                    tc << 9 | rd << 8 | ra << 7 | z << 4 |
+                    static_cast<uint16_t>(rcode);
 
     std::vector<uint8_t> bytes(12);
     uint16_t *data = reinterpret_cast<uint16_t *>(bytes.data());

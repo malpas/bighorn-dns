@@ -45,6 +45,7 @@ TEST(StandardQueryTest, Example621) {
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
+    EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::Ok);
     std::vector<bighorn::Rr> answers;
     answers.push_back(test_records[0]);
     answers.push_back(test_records[1]);
@@ -63,6 +64,7 @@ TEST(StandardQueryTest, Example622) {
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
+    EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::Ok);
     std::vector<bighorn::Rr> answers;
     answers.push_back(test_records[0]);
     answers.push_back(test_records[1]);
@@ -83,6 +85,7 @@ TEST(StandardQueryTest, Example623) {
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
+    EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::Ok);
     std::vector<bighorn::Rr> answers;
     answers.push_back(test_records[2]);
     EXPECT_EQ(result.answers, answers);
@@ -105,10 +108,30 @@ TEST(StandardQueryTest, Example624) {
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
-    std::vector<bighorn::Rr> answers;
-    EXPECT_EQ(result.answers, answers);
-    std::vector<bighorn::Rr> authorities;
-    EXPECT_EQ(result.authorities, authorities);
-    std::vector<bighorn::Rr> additional;
-    EXPECT_EQ(result.additional, additional);
+    EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::Ok);
+    EXPECT_EQ(result.answers, std::vector<bighorn::Rr>{});
+    EXPECT_EQ(result.authorities, std::vector<bighorn::Rr>{});
+    EXPECT_EQ(result.additional, std::vector<bighorn::Rr>{});
+}
+
+TEST(StandardQueryTest, Example625) {
+    // Note: not including negative caching response as this is an optional
+    // feature that should be tested separately.
+
+    auto test_records = get_test_records();
+    bighorn::Resolver resolver(test_records);
+
+    bighorn::Question question{.labels = {"sir-nic", "arpa"},
+                                .qtype = bighorn::DnsType::A,
+                                .qclass = bighorn::DnsClass::In};
+    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+                          .questions = {question}};
+    auto result = resolver.resolve(msg);
+    EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
+    EXPECT_EQ(result.header.qr, 1);
+    EXPECT_EQ(result.header.aa, 1);
+    EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::NameError);
+    EXPECT_EQ(result.answers, std::vector<bighorn::Rr>{});
+    EXPECT_EQ(result.authorities, std::vector<bighorn::Rr>{});
+    EXPECT_EQ(result.additional, std::vector<bighorn::Rr>{});
 }

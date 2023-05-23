@@ -39,6 +39,15 @@ enum class DnsType : uint16_t {
 
 enum class DnsClass : uint16_t { In = 1, Cs = 2, Ch = 3, Hs = 4 };
 
+enum class ResponseCode : uint8_t {
+    Ok = 0,
+    FormatError = 1,
+    ServerFailure = 2,
+    NameError = 3,
+    NotImplemented = 4,
+    Refused = 5
+};
+
 struct Rr {
     std::vector<std::string> labels;
     DnsType type;
@@ -155,7 +164,7 @@ struct Header {
     uint16_t rd : 1;
     uint16_t ra : 1;
     uint16_t z : 3;
-    uint16_t rcode : 4;
+    ResponseCode rcode : 4;
 
     uint16_t qdcount;
     uint16_t ancount;
@@ -189,7 +198,7 @@ template <typename SyncReadStream>
     header.rd = meta >> 8 & 1;
     header.ra = meta >> 7 & 1;
     header.z = meta >> 4 & 0b111;
-    header.rcode = meta & 0b1111;
+    header.rcode = static_cast<ResponseCode>(meta & 0b1111);
 
     asio_err = read_number(stream, buf, header.qdcount);
     if (asio_err) {

@@ -62,5 +62,5 @@ TEST(InputTest, FullHeader) {
     EXPECT_EQ(header.rd, 0);
     EXPECT_EQ(header.ra, 0);
     EXPECT_EQ(header.z, 1);
-    EXPECT_EQ(header.rcode, 2);
+    EXPECT_EQ(header.rcode, bighorn::ResponseCode::ServerFailure);
 }

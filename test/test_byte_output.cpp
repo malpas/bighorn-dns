@@ -20,7 +20,7 @@ static bighorn::Header example_header = {.id = 1,
                                           .rd = 0,
                                           .ra = 0,
                                           .z = 1,
-                                          .rcode = 2};
+                                          .rcode = bighorn::ResponseCode::Ok};
 
 TEST(ByteOutputTest, HeaderInOut) {
     StreamTester stream_tester(example_header.bytes());

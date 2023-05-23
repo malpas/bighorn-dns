@@ -3,23 +3,7 @@
 
 namespace bighorn {
 
-Message bighorn::Resolver::resolve(const Message &query) {
-    Message response;
-    response.header = query.header;
-    response.header.qr = 1;
-    response.header.aa = 1;
-    for (auto &question : query.questions) {
-        auto records = resolve_question(question);
-        std::copy(records.begin(), records.end(),
-                  std::back_inserter(response.answers));
-        if (question.qtype == DnsType::Mx) {
-            add_additional_records_for_mx(question.labels, response);
-        }
-    }
-    return response;
-}
-
-bool is_wildcard(const std::string &s) { return s != "*"; }
+bool is_wildcard(const std::string &s) { return s == "*"; }
 
 bool is_label_match(const std::vector<std::string> &labels,
                     const Rr &candidate) {
@@ -32,6 +16,31 @@ bool is_label_match(const std::vector<std::string> &labels,
         }
     }
     return true;
+}
+
+Message bighorn::Resolver::resolve(const Message &query) {
+    Message response;
+    response.header = query.header;
+    response.header.qr = 1;
+    response.header.aa = 1;
+    for (auto &question : query.questions) {
+        auto records = resolve_question(question);
+        std::copy(records.begin(), records.end(),
+                  std::back_inserter(response.answers));
+        if (question.qtype == DnsType::Mx) {
+            add_additional_records_for_mx(question.labels, response);
+        }
+        if (records.size() == 0) {
+            bool name_exists =
+                std::any_of(records_.begin(), records_.end(),
+                            std::bind(is_label_match, question.labels,
+                                      std::placeholders::_1));
+            if (!name_exists) {
+                response.header.rcode = ResponseCode::NameError;
+            }
+        }
+    }
+    return response;
 }
 
 std::vector<Rr> Resolver::resolve_question(const Question &question) {
