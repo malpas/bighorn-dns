@@ -91,3 +91,24 @@ TEST(StandardQueryTest, Example623) {
     additional.push_back(test_records[1]);
     EXPECT_EQ(result.additional, additional);
 }
+
+TEST(StandardQueryTest, Example624) {
+    auto test_records = get_test_records();
+    bighorn::Resolver resolver(test_records);
+
+    bighorn::Question question{.labels = {"sri-nic", "arpa"},
+                                .qtype = bighorn::DnsType::Ns,
+                                .qclass = bighorn::DnsClass::In};
+    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+                          .questions = {question}};
+    auto result = resolver.resolve(msg);
+    EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
+    EXPECT_EQ(result.header.qr, 1);
+    EXPECT_EQ(result.header.aa, 1);
+    std::vector<bighorn::Rr> answers;
+    EXPECT_EQ(result.answers, answers);
+    std::vector<bighorn::Rr> authorities;
+    EXPECT_EQ(result.authorities, authorities);
+    std::vector<bighorn::Rr> additional;
+    EXPECT_EQ(result.additional, additional);
+}
