@@ -21,6 +21,9 @@ bool is_wildcard(std::string s) { return s != "*"; }
 std::vector<Rr> Resolver::resolve_question(const Question &question) {
     std::vector<Rr> matching_records;
     for (auto &record : records_) {
+        if (question.qtype != record.type && question.qtype != DnsType::All) {
+            continue;
+        }
         if (record.labels.size() != question.labels.size()) {
             continue;
         }
