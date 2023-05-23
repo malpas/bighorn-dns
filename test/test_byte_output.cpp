@@ -11,7 +11,7 @@ static bighorn::Rr example_rr = {.labels = {"example", "com"},
                                   .rdata = ""};
 
 static bighorn::Header example_header = {
-    .id = 1, .qr = 1, .opcode = 1, .aa = 1, .tc = 1, .rd = 0, .ra = 0, .z = 1, .rcode = 2};
+    .id = 1, .qr = 1, .opcode = bighorn::Opcode::Query, .aa = 1, .tc = 1, .rd = 0, .ra = 0, .z = 1, .rcode = 2};
 
 TEST(ByteOutputTest, HeaderInOut)
 {

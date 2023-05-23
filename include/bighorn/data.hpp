@@ -165,12 +165,19 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_rr(SyncRea
     return {};
 }
 
+enum class Opcode : uint8_t
+{
+    Query = 0,
+    Iquery = 1,
+    Status = 2
+};
+
 struct Header
 {
     uint16_t id;
 
     uint16_t qr : 1;
-    uint16_t opcode : 4;
+    Opcode opcode : 4;
     uint16_t aa : 1;
     uint16_t tc : 1;
     uint16_t rd : 1;
@@ -205,7 +212,7 @@ template <typename SyncReadStream> [[nodiscard]] std::error_code read_header(Syn
         return asio_err;
     }
     header.qr = meta >> 15 & 1;
-    header.opcode = meta >> 11 & 0b1111;
+    header.opcode = static_cast<Opcode>(meta >> 11 & 0b1111);
     header.aa = meta >> 10 & 1;
     header.tc = meta >> 9 & 1;
     header.rd = meta >> 8 & 1;

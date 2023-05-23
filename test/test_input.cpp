@@ -13,8 +13,8 @@ static std::vector<uint8_t> example_rr = {'\7', 'e',   'x',    'a',  'm',  'p', 
                                           '\0', '\xe', '\x10', '\0', '\4', '\1', '\2', '\3', '\4'};
 
 static std::vector<uint8_t> example_header = {
-    '\0', '\1', 0x8e, 0x12, '\0', '\1',
-    '\0', '\1', '\0', '\1', '\0', '\1'}; // ID=1, QR=1, OP=1, AA=1, TC=1, RD=0, RA=0, Z=1, RCODE=2
+    '\0', '\1', 0x86, 0x12, '\0', '\1',
+    '\0', '\1', '\0', '\1', '\0', '\1'}; // ID=1, QR=1, OP=0, AA=1, TC=1, RD=0, RA=0, Z=1, RCODE=2
 
 TEST(InputTest, EmptyRr)
 {
@@ -57,7 +57,7 @@ TEST(InputTest, FullHeader)
     ASSERT_FALSE(err);
     EXPECT_EQ(header.id, 1);
     EXPECT_EQ(header.qr, 1);
-    EXPECT_EQ(header.opcode, 1);
+    EXPECT_EQ(header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(header.aa, 1);
     EXPECT_EQ(header.tc, 1);
     EXPECT_EQ(header.rd, 0);
