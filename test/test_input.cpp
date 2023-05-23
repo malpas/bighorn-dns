@@ -1,6 +1,7 @@
-#include <asio.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <asio.hpp>
 #include <bighorn/data.hpp>
 #include <istream>
 #include <ostream>
@@ -8,16 +9,17 @@
 
 #include "stream_tester.hpp"
 
-static std::vector<uint8_t> example_rr = {'\7', 'e',   'x',    'a',  'm',  'p',  'l',  'e',  '\3',
-                                          'c',  'o',   'm',    '\0', '\0', '\1', '\0', '\1', '\0',
-                                          '\0', '\xe', '\x10', '\0', '\4', '\1', '\2', '\3', '\4'};
+static std::vector<uint8_t> example_rr = {
+    '\7', 'e',   'x',    'a',  'm',  'p',  'l',  'e',  '\3',
+    'c',  'o',   'm',    '\0', '\0', '\1', '\0', '\1', '\0',
+    '\0', '\xe', '\x10', '\0', '\4', '\1', '\2', '\3', '\4'};
 
 static std::vector<uint8_t> example_header = {
-    '\0', '\1', 0x86, 0x12, '\0', '\1',
-    '\0', '\1', '\0', '\1', '\0', '\1'}; // ID=1, QR=1, OP=0, AA=1, TC=1, RD=0, RA=0, Z=1, RCODE=2
+    '\0', '\1', 0x86, 0x12, '\0', '\1', '\0',
+    '\1', '\0', '\1', '\0', '\1'};  // ID=1, QR=1, OP=0, AA=1, TC=1, RD=0, RA=0,
+                                    // Z=1, RCODE=2
 
-TEST(InputTest, EmptyRr)
-{
+TEST(InputTest, EmptyRr) {
     bighorn::Rr rr;
     StreamTester stream_tester({});
 
@@ -25,8 +27,7 @@ TEST(InputTest, EmptyRr)
     ASSERT_EQ(err, asio::error::eof);
 }
 
-TEST(InputTest, CutShortRr)
-{
+TEST(InputTest, CutShortRr) {
     bighorn::Rr rr;
     StreamTester stream_tester({'\4', 'e', 'x', 'a'});
 
@@ -34,8 +35,7 @@ TEST(InputTest, CutShortRr)
     ASSERT_EQ(err, asio::error::eof);
 }
 
-TEST(InputTest, FullSimpleRr)
-{
+TEST(InputTest, FullSimpleRr) {
     bighorn::Rr rr;
     StreamTester stream_tester(example_rr);
 
@@ -48,8 +48,7 @@ TEST(InputTest, FullSimpleRr)
     EXPECT_EQ(rr.rdata, "\1\2\3\4");
 }
 
-TEST(InputTest, FullHeader)
-{
+TEST(InputTest, FullHeader) {
     StreamTester stream_tester(example_header);
 
     bighorn::Header header;

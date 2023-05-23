@@ -1,8 +1,10 @@
 
-#include "stream_tester.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 #include <bighorn/data.hpp>
+
+#include "stream_tester.hpp"
 
 static bighorn::Rr example_rr = {.labels = {"example", "com"},
                                   .type = bighorn::DnsType::A,
@@ -10,11 +12,17 @@ static bighorn::Rr example_rr = {.labels = {"example", "com"},
                                   .ttl = 3600,
                                   .rdata = ""};
 
-static bighorn::Header example_header = {
-    .id = 1, .qr = 1, .opcode = bighorn::Opcode::Query, .aa = 1, .tc = 1, .rd = 0, .ra = 0, .z = 1, .rcode = 2};
+static bighorn::Header example_header = {.id = 1,
+                                          .qr = 1,
+                                          .opcode = bighorn::Opcode::Query,
+                                          .aa = 1,
+                                          .tc = 1,
+                                          .rd = 0,
+                                          .ra = 0,
+                                          .z = 1,
+                                          .rcode = 2};
 
-TEST(ByteOutputTest, HeaderInOut)
-{
+TEST(ByteOutputTest, HeaderInOut) {
     StreamTester stream_tester(example_header.bytes());
 
     bighorn::Header header;
@@ -23,8 +31,7 @@ TEST(ByteOutputTest, HeaderInOut)
     ASSERT_EQ(header, example_header);
 }
 
-TEST(ByteOutputTest, RrInOut)
-{
+TEST(ByteOutputTest, RrInOut) {
     StreamTester stream_tester(example_rr.bytes());
 
     bighorn::Rr rr;

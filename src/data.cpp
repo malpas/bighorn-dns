@@ -1,12 +1,10 @@
 #include "data.hpp"
 
-namespace bighorn
-{
+namespace bighorn {
 
-std::vector<uint8_t> Header::bytes()
-{
-    uint16_t meta =
-        qr << 15 | static_cast<uint16_t>(opcode) << 11 | aa << 10 | tc << 9 | rd << 8 | ra << 7 | z << 4 | rcode;
+std::vector<uint8_t> Header::bytes() {
+    uint16_t meta = qr << 15 | static_cast<uint16_t>(opcode) << 11 | aa << 10 |
+                    tc << 9 | rd << 8 | ra << 7 | z << 4 | rcode;
 
     std::vector<uint8_t> bytes(12);
     uint16_t *data = reinterpret_cast<uint16_t *>(bytes.data());
@@ -19,22 +17,18 @@ std::vector<uint8_t> Header::bytes()
     return bytes;
 }
 
-std::vector<uint8_t> Rr::bytes()
-{
+std::vector<uint8_t> Rr::bytes() {
     std::vector<uint8_t> bytes;
     size_t required_size = 0;
-    for (auto &label : labels)
-    {
+    for (auto &label : labels) {
         required_size += 1 + label.length();
     }
     required_size += 10;
     required_size += rdata.length();
     bytes.reserve(required_size);
-    for (auto &label : labels)
-    {
+    for (auto &label : labels) {
         bytes.push_back(static_cast<uint8_t>(label.length()));
-        for (auto &c : label)
-        {
+        for (auto &c : label) {
             bytes.push_back(c);
         }
     }
@@ -56,12 +50,11 @@ std::vector<uint8_t> Rr::bytes()
     uint16_t rdlength = htons(static_cast<uint16_t>(rdata.length()));
     bytes.push_back(rdlength & 0xFF);
     bytes.push_back(rdlength >> 8);
-    for (auto &c : rdata)
-    {
+    for (auto &c : rdata) {
         bytes.push_back(c);
     }
 
     return bytes;
 }
 
-} // namespace bighorn
+}  // namespace bighorn

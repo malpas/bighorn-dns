@@ -5,14 +5,13 @@
 
 #include "error.hpp"
 
-namespace bighorn
-{
+namespace bighorn {
 
-struct Hostname
-{
+struct Hostname {
     std::vector<std::string> labels;
 };
 
-[[nodiscard]] std::error_code parse_hostname(const std::string &hostname, Hostname &domain);
+[[nodiscard]] std::error_code parse_hostname(const std::string &hostname,
+                                             Hostname &domain);
 
-} // namespace bighorn
+}  // namespace bighorn

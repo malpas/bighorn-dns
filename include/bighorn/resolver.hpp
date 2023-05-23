@@ -1,22 +1,19 @@
 #pragma once
-#include "data.hpp"
 #include <asio.hpp>
 #include <vector>
 
-namespace bighorn
-{
+#include "data.hpp"
 
-class Resolver
-{
-  public:
-    Resolver(std::vector<Rr> records) : records(records)
-    {
-    }
+namespace bighorn {
+
+class Resolver {
+   public:
+    Resolver(std::vector<Rr> records) : records_(records) {}
     Message resolve(const Message &query);
 
-  private:
-    std::vector<Rr> records;
+   private:
+    std::vector<Rr> records_;
     std::vector<Rr> resolve_question(const Question &);
 };
 
-} // namespace bighorn
+}  // namespace bighorn
