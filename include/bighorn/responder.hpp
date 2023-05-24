@@ -16,11 +16,11 @@ struct DomainAuthority {
     auto operator<=>(const DomainAuthority &) const = default;
 };
 
-class Resolver {
+class Responder {
    public:
-    Resolver(std::vector<Rr> records, std::vector<DomainAuthority> authorities)
+    Responder(std::vector<Rr> records, std::vector<DomainAuthority> authorities)
         : records_(records), authorities_(authorities) {}
-    Message resolve(const Message &query);
+    Message respond(const Message &query);
 
    private:
     std::vector<Rr> records_;

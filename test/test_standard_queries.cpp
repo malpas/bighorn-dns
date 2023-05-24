@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <bighorn/resolver.hpp>
+#include <bighorn/responder.hpp>
 
 // See section 6.2 of RFC 1034
 
@@ -49,8 +49,8 @@ std::vector<bighorn::DomainAuthority> get_test_authorities() {
     return std::vector<bighorn::DomainAuthority>{sri_nic, a_isi};
 }
 
-bighorn::Resolver get_resolver() {
-    return bighorn::Resolver(get_test_records(), get_test_authorities());
+bighorn::Responder get_resolver() {
+    return bighorn::Responder(get_test_records(), get_test_authorities());
 }
 
 TEST(StandardQueryTest, Example621) {
@@ -62,7 +62,7 @@ TEST(StandardQueryTest, Example621) {
                                 .qclass = bighorn::DnsClass::In};
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
-    auto result = resolver.resolve(msg);
+    auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -82,7 +82,7 @@ TEST(StandardQueryTest, Example622) {
                                 .qclass = bighorn::DnsClass::In};
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
-    auto result = resolver.resolve(msg);
+    auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -104,7 +104,7 @@ TEST(StandardQueryTest, Example623) {
                                 .qclass = bighorn::DnsClass::In};
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
-    auto result = resolver.resolve(msg);
+    auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -127,7 +127,7 @@ TEST(StandardQueryTest, Example624) {
                                 .qclass = bighorn::DnsClass::In};
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
-    auto result = resolver.resolve(msg);
+    auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -149,7 +149,7 @@ TEST(StandardQueryTest, Example625) {
                                 .qclass = bighorn::DnsClass::In};
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
-    auto result = resolver.resolve(msg);
+    auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -168,8 +168,9 @@ TEST(StandardQueryTest, Example626) {
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
 
-    auto result = resolver.resolve(msg);
+    auto result = resolver.respond(msg);
     ASSERT_EQ(result.header.aa, 0);
+
     auto ns_records = std::vector<bighorn::Rr>{
         bighorn::Rr::ns_record({"mil"}, {"sri-nic", "arpa"}, 86400),
         bighorn::Rr::ns_record({"mil"}, {"a", "isi", "edu"}, 86400),

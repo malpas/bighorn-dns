@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <resolver.hpp>
+#include <responder.hpp>
 #include <set>
 
 namespace bighorn {
@@ -35,7 +35,7 @@ bool is_authority_match(const Labels &labels,
     return match;
 }
 
-Message bighorn::Resolver::resolve(const Message &query) {
+Message bighorn::Responder::respond(const Message &query) {
     Message response;
     response.header = query.header;
     response.header.qr = 1;
@@ -63,7 +63,7 @@ Message bighorn::Resolver::resolve(const Message &query) {
     return response;
 }
 
-std::vector<Rr> Resolver::resolve_question(const Question &question) {
+std::vector<Rr> Responder::resolve_question(const Question &question) {
     std::vector<Rr> matching_records;
     for (auto &candidate : records_) {
         if (question.qtype != candidate.type &&
@@ -78,7 +78,7 @@ std::vector<Rr> Resolver::resolve_question(const Question &question) {
     return matching_records;
 }
 
-void Resolver::add_additional_records_for_mx(
+void Responder::add_additional_records_for_mx(
     const std::vector<std::string> &labels, Message &response) {
     for (auto &record : records_) {
         if (is_label_match(record.labels, record) &&
@@ -88,8 +88,8 @@ void Resolver::add_additional_records_for_mx(
     }
 }
 
-void bighorn::Resolver::check_authorities(const Question &question,
-                                           Message &response) {
+void bighorn::Responder::check_authorities(const Question &question,
+                                            Message &response) {
     std::set<DomainAuthority> unique_auths;
     for (auto &authority : authorities_) {
         if (is_authority_match(question.labels, authority) &&
