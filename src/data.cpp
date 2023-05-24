@@ -1,5 +1,7 @@
 #include "data.hpp"
 
+#include <sstream>
+
 namespace bighorn {
 
 std::vector<uint8_t> Header::bytes() {
@@ -56,6 +58,35 @@ std::vector<uint8_t> Rr::bytes() {
     }
 
     return bytes;
+}
+
+Rr Rr::a_record(Labels labels, uint32_t ip, uint32_t ttl) {
+    std::string rdata(4, 0);
+    ip = htons(ip);
+    rdata[0] = static_cast<char>(ip >> 0xFF);
+    rdata[1] = static_cast<char>(ip >> 8 & 0xFF);
+    rdata[2] = static_cast<char>(ip >> 16 & 0xFF);
+    rdata[3] = static_cast<char>(ip >> 24 & 0xFF);
+    return Rr{.labels = labels,
+              .type = DnsType::A,
+              .cls = DnsClass::In,
+              .ttl = ttl,
+              .rdata = rdata};
+}
+
+Rr Rr::ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
+                 DnsClass cls) {
+    std::stringstream rdata;
+    for (std::string &label : authority_labels) {
+        rdata << static_cast<char>(label.length());
+        rdata << label;
+    }
+    rdata << static_cast<char>(0);
+    return Rr{.labels = labels,
+              .type = DnsType::Ns,
+              .cls = cls,
+              .ttl = ttl,
+              .rdata = std::move(rdata.str())};
 }
 
 }  // namespace bighorn

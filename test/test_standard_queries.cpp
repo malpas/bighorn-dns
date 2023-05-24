@@ -1,3 +1,4 @@
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <bighorn/resolver.hpp>
@@ -33,12 +34,32 @@ std::vector<bighorn::Rr> get_test_records() {
 
     return records;
 }
+
+std::vector<bighorn::DomainAuthority> get_test_authorities() {
+    std::vector<bighorn::DomainAuthority> authorities{};
+    // Example 6.2.6
+    auto sri_nic = bighorn::DomainAuthority{.domain = {"mil"},
+                                             .name = {"sri-nic", "arpa"},
+                                             .ips = {0x1A000049, 0x0A000033},
+                                             .ttl = 86400};
+    auto a_isi = bighorn::DomainAuthority{.domain = {"mil"},
+                                           .name = {"a", "isi", "edu"},
+                                           .ips = {0x1A030067},
+                                           .ttl = 86400};
+    return std::vector<bighorn::DomainAuthority>{sri_nic, a_isi};
+}
+
+bighorn::Resolver get_resolver() {
+    return bighorn::Resolver(get_test_records(), get_test_authorities());
+}
+
 TEST(StandardQueryTest, Example621) {
+    auto test_records = get_test_records();
+    auto resolver = get_resolver();
+
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::A,
                                 .qclass = bighorn::DnsClass::In};
-    auto test_records = get_test_records();
-    bighorn::Resolver resolver(test_records);
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
     auto result = resolver.resolve(msg);
@@ -53,11 +74,12 @@ TEST(StandardQueryTest, Example621) {
 }
 
 TEST(StandardQueryTest, Example622) {
+    auto resolver = get_resolver();
+    auto test_records = get_test_records();
+
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::All,
                                 .qclass = bighorn::DnsClass::In};
-    auto test_records = get_test_records();
-    bighorn::Resolver resolver(test_records);
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
     auto result = resolver.resolve(msg);
@@ -74,11 +96,12 @@ TEST(StandardQueryTest, Example622) {
 }
 
 TEST(StandardQueryTest, Example623) {
+    auto resolver = get_resolver();
+    auto test_records = get_test_records();
+
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::Mx,
                                 .qclass = bighorn::DnsClass::In};
-    auto test_records = get_test_records();
-    bighorn::Resolver resolver(test_records);
     bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
                           .questions = {question}};
     auto result = resolver.resolve(msg);
@@ -96,8 +119,8 @@ TEST(StandardQueryTest, Example623) {
 }
 
 TEST(StandardQueryTest, Example624) {
+    auto resolver = get_resolver();
     auto test_records = get_test_records();
-    bighorn::Resolver resolver(test_records);
 
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::Ns,
@@ -118,8 +141,8 @@ TEST(StandardQueryTest, Example625) {
     // Note: not including negative caching response as this is an optional
     // feature that should be tested separately.
 
+    auto resolver = get_resolver();
     auto test_records = get_test_records();
-    bighorn::Resolver resolver(test_records);
 
     bighorn::Question question{.labels = {"sir-nic", "arpa"},
                                 .qtype = bighorn::DnsType::A,
@@ -134,4 +157,32 @@ TEST(StandardQueryTest, Example625) {
     EXPECT_EQ(result.answers, std::vector<bighorn::Rr>{});
     EXPECT_EQ(result.authorities, std::vector<bighorn::Rr>{});
     EXPECT_EQ(result.additional, std::vector<bighorn::Rr>{});
+}
+
+TEST(StandardQueryTest, Example626) {
+    auto resolver = get_resolver();
+    auto labels = std::vector<std::string>{"brl", "mil"};
+    bighorn::Question question{.labels = labels,
+                                .qtype = bighorn::DnsType::A,
+                                .qclass = bighorn::DnsClass::In};
+    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+                          .questions = {question}};
+
+    auto result = resolver.resolve(msg);
+    ASSERT_EQ(result.header.aa, 0);
+    auto ns_records = std::vector<bighorn::Rr>{
+        bighorn::Rr::ns_record({"mil"}, {"sri-nic", "arpa"}, 86400),
+        bighorn::Rr::ns_record({"mil"}, {"a", "isi", "edu"}, 86400),
+    };
+    auto a_records = std::vector<bighorn::Rr>{
+        bighorn::Rr::a_record({"a", "isi", "edu"}, 0x1A030067, 0),
+        bighorn::Rr::a_record({"sri-nic", "arpa"}, 0x1A000049, 0),
+        bighorn::Rr::a_record({"sri-nic", "arpa"}, 0x0A000033, 0),
+    };
+    EXPECT_EQ(result.authorities.size(), 2);
+    ASSERT_THAT(result.authorities,
+                testing::UnorderedElementsAreArray(ns_records));
+    EXPECT_EQ(result.additional.size(), 3);
+    ASSERT_THAT(result.additional,
+                testing::UnorderedElementsAreArray(a_records));
 }

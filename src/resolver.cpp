@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <resolver.hpp>
+#include <set>
 
 namespace bighorn {
 
 bool is_wildcard(const std::string &s) { return s == "*"; }
 
-bool is_label_match(const std::vector<std::string> &labels,
-                    const Rr &candidate) {
+bool is_label_match(const Labels &labels, const Rr &candidate) {
     if (labels.size() != candidate.labels.size()) {
         return false;
     }
@@ -16,6 +16,23 @@ bool is_label_match(const std::vector<std::string> &labels,
         }
     }
     return true;
+}
+
+bool is_authority_match(const Labels &labels,
+                        const DomainAuthority &authority) {
+    bool match = false;
+    if (authority.domain.size() > labels.size()) {
+        return false;
+    }
+    int i = 0;
+    for (auto l = authority.domain.rbegin(); l < authority.domain.rend(); ++l) {
+        if (*l != labels[labels.size() - 1 - i]) {
+            return false;
+        }
+        ++i;
+    }
+    match = true;
+    return match;
 }
 
 Message bighorn::Resolver::resolve(const Message &query) {
@@ -29,6 +46,9 @@ Message bighorn::Resolver::resolve(const Message &query) {
                   std::back_inserter(response.answers));
         if (question.qtype == DnsType::Mx) {
             add_additional_records_for_mx(question.labels, response);
+        }
+        if (records.size() == 0) {
+            check_authorities(question, response);
         }
         if (records.size() == 0) {
             bool name_exists =
@@ -65,6 +85,30 @@ void Resolver::add_additional_records_for_mx(
             record.type == DnsType::A) {
             response.additional.push_back(record);
         }
+    }
+}
+
+void bighorn::Resolver::check_authorities(const Question &question,
+                                           Message &response) {
+    std::set<DomainAuthority> unique_auths;
+    for (auto &authority : authorities_) {
+        if (is_authority_match(question.labels, authority) &&
+            std::find(unique_auths.begin(), unique_auths.end(), authority) ==
+                unique_auths.end()) {
+            unique_auths.insert(authority);
+        }
+    }
+    for (auto &authority : unique_auths) {
+        auto ns_record =
+            Rr::ns_record(authority.domain, authority.name, authority.ttl);
+        response.authorities.push_back(ns_record);
+        for (auto &ip : authority.ips) {
+            auto a_record = Rr::a_record(authority.name, ip, 0);
+            response.additional.push_back(a_record);
+        }
+    }
+    if (unique_auths.size() != 0) {
+        response.header.aa = 0;
     }
 }
 

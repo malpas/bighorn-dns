@@ -48,6 +48,8 @@ enum class ResponseCode : uint8_t {
     Refused = 5
 };
 
+using Labels = std::vector<std::string>;
+
 struct Rr {
     std::vector<std::string> labels;
     DnsType type;
@@ -57,6 +59,10 @@ struct Rr {
 
     std::vector<uint8_t> bytes();
     bool operator==(const Rr &) const = default;
+
+    static Rr a_record(Labels labels, uint32_t ip, uint32_t ttl);
+    static Rr ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
+                        DnsClass cls = DnsClass::In);
 };
 
 namespace {
