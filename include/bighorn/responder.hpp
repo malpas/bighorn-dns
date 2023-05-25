@@ -22,6 +22,8 @@ class Responder {
         : records_(records), authorities_(authorities) {}
     Message respond(const Message &query);
 
+    Responder(Responder &&) = default;
+
    private:
     std::vector<Rr> records_;
     std::vector<DomainAuthority> authorities_;

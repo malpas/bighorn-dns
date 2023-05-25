@@ -17,7 +17,11 @@ target_link_libraries(bighorn asio::asio)
 
 file(GLOB TEST_FILES test/*.cpp)
 add_executable(bighorn_test ${TEST_FILES})
-target_link_libraries(bighorn_test GTest::gtest_main asio::asio bighorn)
+target_link_libraries(bighorn_test GTest::gtest_main GTest::gmock_main asio::asio bighorn)
+
+file(GLOB EXAMPLE_FILES example/udp.cpp)
+add_executable(bighorn_example ${EXAMPLE_FILES})
+target_link_libraries(bighorn_example bighorn)
 
 include(GoogleTest)
 gtest_discover_tests(bighorn_test)

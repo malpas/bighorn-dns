@@ -37,6 +37,7 @@ bool is_authority_match(const Labels &labels,
 
 Message bighorn::Responder::respond(const Message &query) {
     Message response;
+    response.questions = query.questions;
     response.header = query.header;
     response.header.qr = 1;
     response.header.aa = 1;

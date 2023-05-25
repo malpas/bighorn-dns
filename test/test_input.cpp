@@ -2,44 +2,45 @@
 #include <gtest/gtest.h>
 
 #include <asio.hpp>
+#include <bighorn/buffer.hpp>
 #include <bighorn/data.hpp>
 #include <istream>
 #include <ostream>
 #include <sstream>
 
-#include "stream_tester.hpp"
-
-static std::vector<uint8_t> example_rr = {
+static const std::vector<uint8_t> example_rr = {
     '\7', 'e',   'x',    'a',  'm',  'p',  'l',  'e',  '\3',
     'c',  'o',   'm',    '\0', '\0', '\1', '\0', '\1', '\0',
     '\0', '\xe', '\x10', '\0', '\4', '\1', '\2', '\3', '\4'};
 
-static std::vector<uint8_t> example_header = {
+static const std::vector<uint8_t> example_header = {
     '\0', '\1', 0x86, 0x12, '\0', '\1', '\0',
     '\1', '\0', '\1', '\0', '\1'};  // ID=1, QR=1, OP=0, AA=1, TC=1, RD=0, RA=0,
                                     // Z=1, RCODE=2
 
 TEST(InputTest, EmptyRr) {
-    bighorn::Rr rr;
-    StreamTester stream_tester({});
+    std::vector<uint8_t> empty_data;
+    bighorn::DataBuffer buffer(&empty_data);
 
-    auto err = bighorn::read_rr(stream_tester, rr);
-    ASSERT_EQ(err, asio::error::eof);
+    bighorn::Rr rr;
+    auto err = bighorn::read_rr(buffer, rr);
+    ASSERT_EQ(err, bighorn::MessageError::ReadError);
 }
 
 TEST(InputTest, CutShortRr) {
-    bighorn::Rr rr;
-    StreamTester stream_tester({'\4', 'e', 'x', 'a'});
+    std::vector<uint8_t> data{'\4', 'e', 'x', 'a'};
+    bighorn::DataBuffer buffer(&data);
 
-    auto err = bighorn::read_rr(stream_tester, rr);
-    ASSERT_EQ(err, asio::error::eof);
+    bighorn::Rr rr;
+    auto err = bighorn::read_rr(buffer, rr);
+    ASSERT_EQ(err, bighorn::MessageError::ReadError);
 }
 
 TEST(InputTest, FullSimpleRr) {
     bighorn::Rr rr;
-    StreamTester stream_tester(example_rr);
+    bighorn::DataBuffer buffer(&example_rr);
 
-    auto err = bighorn::read_rr(stream_tester, rr);
+    auto err = bighorn::read_rr(buffer, rr);
     ASSERT_FALSE(err);
     ASSERT_THAT(rr.labels, testing::ElementsAre("example", "com"));
     EXPECT_EQ(rr.type, bighorn::DnsType::A);
@@ -49,10 +50,10 @@ TEST(InputTest, FullSimpleRr) {
 }
 
 TEST(InputTest, FullHeader) {
-    StreamTester stream_tester(example_header);
+    bighorn::DataBuffer buffer(&example_header);
 
     bighorn::Header header;
-    auto err = bighorn::read_header(stream_tester, header);
+    auto err = bighorn::read_header(buffer, header);
     ASSERT_FALSE(err);
     EXPECT_EQ(header.id, 1);
     EXPECT_EQ(header.qr, 1);
