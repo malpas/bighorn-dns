@@ -72,14 +72,22 @@ struct Rr {
 template <typename T>
 [[nodiscard]] std::error_code read_labels(DataBuffer<T> &buffer,
                                           std::vector<std::string> &labels) {
+    int total_len = 0;
     uint8_t label_len;
     do {
         auto err = buffer.read_byte(label_len);
+        total_len += label_len;
         if (err) {
             return err;
         }
         if (label_len == 0) {
             break;
+        }
+        if (label_len > 63) {
+            return MessageError::LabelTooLong;
+        }
+        if (total_len > 255) {
+            return MessageError::NameTooLong;
         }
         std::string label(label_len, '\0');
         err = buffer.read_n(label_len, label.data());

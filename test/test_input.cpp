@@ -9,14 +9,13 @@
 #include <sstream>
 
 static const std::vector<uint8_t> example_rr = {
-    '\7', 'e',   'x',    'a',  'm',  'p',  'l',  'e',  '\3',
-    'c',  'o',   'm',    '\0', '\0', '\1', '\0', '\1', '\0',
-    '\0', '\xe', '\x10', '\0', '\4', '\1', '\2', '\3', '\4'};
+    7, 'e', 'x', 'a', 'm', 'p',    'l',    'e', 3, 'c', 'o', 'm', 0, 0,
+    1, 0,   1,   0,   0,   '\x0e', '\x10', 0,   4, 1,   2,   3,   4};
 
 static const std::vector<uint8_t> example_header = {
-    '\0', '\1', 0x86, 0x12, '\0', '\1', '\0',
-    '\1', '\0', '\1', '\0', '\1'};  // ID=1, QR=1, OP=0, AA=1, TC=1, RD=0, RA=0,
-                                    // Z=1, RCODE=2
+    0, 1, 0x86, 0x12, 0, 1,
+    0, 1, 0,    1,    0, 1};  // ID=1, QR=1, OP=0, AA=1, TC=1, RD=0, RA=0,
+                              // Z=1, RCODE=2
 
 TEST(InputTest, EmptyRr) {
     std::vector<uint8_t> empty_data;
@@ -64,4 +63,29 @@ TEST(InputTest, FullHeader) {
     EXPECT_EQ(header.ra, 0);
     EXPECT_EQ(header.z, 1);
     EXPECT_EQ(header.rcode, bighorn::ResponseCode::ServerFailure);
+}
+
+TEST(InputTest, LabelTooLong) {
+    static std::vector<uint8_t> long_label = {64};
+    for (int i = 0; i < 64; ++i) {
+        long_label.push_back('a');
+    }
+    bighorn::DataBuffer buffer(&long_label);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_EQ(err, bighorn::MessageError::LabelTooLong);
+}
+
+TEST(InputTest, NameTooLong) {
+    static std::vector<uint8_t> long_name;
+    for (int i = 0; i < 256; ++i) {
+        long_name.push_back(1);
+        long_name.push_back('a');
+    }
+    bighorn::DataBuffer buffer(&long_name);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_EQ(err, bighorn::MessageError::NameTooLong);
 }
