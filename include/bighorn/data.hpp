@@ -94,6 +94,16 @@ template <typename T>
         if (err) {
             return err;
         }
+        if (!std::isalnum(label[0])) {
+            return MessageError::InvalidLabelChar;
+        }
+        if (!std::all_of(label.begin(), label.end(),
+                         [](char c) { return std::isalnum(c) || c == '-'; })) {
+            return MessageError::InvalidLabelChar;
+        }
+        if (!std::isalnum(label[label.size() - 1])) {
+            return MessageError::InvalidLabelChar;
+        }
         labels.push_back(label);
     } while (label_len > 0);
     return {};

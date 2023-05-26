@@ -29,6 +29,8 @@ std::string MessageErrorCategory::message(int ev) const {
             return "could not read from stream";
         case MessageError::Eof:
             return "end of file";
+        case MessageError::InvalidLabelChar:
+            return "invalid label character";
         case MessageError::LabelTooLong:
             return "label longer than 63 octets";
         case MessageError::NameTooLong:

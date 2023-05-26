@@ -89,3 +89,48 @@ TEST(InputTest, NameTooLong) {
     auto err = bighorn::read_labels(buffer, labels);
     ASSERT_EQ(err, bighorn::MessageError::NameTooLong);
 }
+
+TEST(InputTest, LabelStartingWithSymbol) {
+    static std::vector<uint8_t> invalid_label{4, '-', 'a', 'b', 'c', 0};
+    bighorn::DataBuffer buffer(&invalid_label);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_EQ(err, bighorn::MessageError::InvalidLabelChar);
+}
+
+TEST(InputTest, LabelWithInvalidSymbol) {
+    static std::vector<uint8_t> invalid_label{4, 'a', '#', 'b', 'c', 0};
+    bighorn::DataBuffer buffer(&invalid_label);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_EQ(err, bighorn::MessageError::InvalidLabelChar);
+}
+
+TEST(InputTest, LabelCanHaveNumbers) {
+    static std::vector<uint8_t> invalid_label{4, '1', '2', '3', 'a', 0};
+    bighorn::DataBuffer buffer(&invalid_label);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_FALSE(err);
+}
+
+TEST(InputTest, LabelCanHaveDash) {
+    static std::vector<uint8_t> invalid_label{3, 'a', '-', 'b', 0};
+    bighorn::DataBuffer buffer(&invalid_label);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_FALSE(err);
+}
+
+TEST(InputTest, LabelMustEndInAlnum) {
+    static std::vector<uint8_t> invalid_label{3, 'a', 'a', '-', 0};
+    bighorn::DataBuffer buffer(&invalid_label);
+
+    std::vector<std::string> labels;
+    auto err = bighorn::read_labels(buffer, labels);
+    ASSERT_EQ(err, bighorn::MessageError::InvalidLabelChar);
+}

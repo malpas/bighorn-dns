@@ -15,7 +15,13 @@ const HostnameErrorCategory hostnameErrCategory{};
 
 std::error_code make_error_code(bighorn::HostnameError e);
 
-enum class MessageError { Eof = 1, ReadError, LabelTooLong, NameTooLong };
+enum class MessageError {
+    Eof = 1,
+    ReadError,
+    InvalidLabelChar,
+    LabelTooLong,
+    NameTooLong
+};
 
 struct MessageErrorCategory : std::error_category {
     const char *name() const noexcept override;
