@@ -29,7 +29,10 @@ asio::awaitable<void> UdpNameServer::handle_recv() {
     Header header;
     err = read_header(buffer, header);
     if (err) {
-        std::cerr << "Could not read header\n";
+        header.rcode = ResponseCode::FormatError;
+        Message response = Message{.header = header};
+        co_await socket_.async_send_to(asio::buffer(response.bytes()),
+                                       remote_endpoint_, asio::use_awaitable);
         co_return;
     }
     std::vector<Question> question_rrs;
@@ -37,7 +40,11 @@ asio::awaitable<void> UdpNameServer::handle_recv() {
         Question question;
         err = read_question(buffer, question);
         if (err) {
-            std::cerr << "Could not read question";
+            header.rcode = ResponseCode::FormatError;
+            Message response = Message{.header = header};
+            co_await socket_.async_send_to(asio::buffer(response.bytes()),
+                                           remote_endpoint_,
+                                           asio::use_awaitable);
             co_return;
         }
         question_rrs.push_back(std::move(question));
