@@ -74,6 +74,16 @@ Rr Rr::a_record(Labels labels, uint32_t ip, uint32_t ttl) {
               .rdata = rdata};
 }
 
+Rr Rr::aaaa_record(Labels labels, std::array<uint8_t, 16> ip, uint32_t ttl) {
+    std::string rdata(16, 0);
+    std::memcpy(rdata.data(), ip.data(), 16);
+    return Rr{.labels = labels,
+              .type = DnsType::Aaaa,
+              .cls = DnsClass::In,
+              .ttl = ttl,
+              .rdata = rdata};
+}
+
 Rr Rr::ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
                  DnsClass cls) {
     std::stringstream rdata;

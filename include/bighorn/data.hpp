@@ -32,6 +32,7 @@ enum class DnsType : uint16_t {
     Minfo = 14,
     Mx = 15,
     Txt = 16,
+    Aaaa = 28,
     Axfr = 252,   // QTYPE
     Mailb = 253,  // QTYPE
     MailA = 254,  // QTYPE
@@ -62,6 +63,8 @@ struct Rr {
     bool operator==(const Rr &) const = default;
 
     static Rr a_record(Labels labels, uint32_t ip, uint32_t ttl);
+    static Rr aaaa_record(Labels labels, std::array<uint8_t, 16> ip,
+                          uint32_t ttl);
     static Rr ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
                         DnsClass cls = DnsClass::In);
 };
