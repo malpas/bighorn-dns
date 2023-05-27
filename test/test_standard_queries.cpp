@@ -49,8 +49,10 @@ std::vector<bighorn::DomainAuthority> get_test_authorities() {
     return std::vector<bighorn::DomainAuthority>{sri_nic, a_isi};
 }
 
-bighorn::Responder get_resolver() {
-    return bighorn::Responder(get_test_records(), get_test_authorities());
+bighorn::Responder<bighorn::StaticLookup> get_resolver() {
+    auto lookup =
+        bighorn::StaticLookup(get_test_records(), get_test_authorities());
+    return bighorn::Responder<bighorn::StaticLookup>(std::move(lookup));
 }
 
 TEST(StandardQueryTest, Example621) {

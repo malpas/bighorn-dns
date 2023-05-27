@@ -10,9 +10,11 @@ std::vector<bighorn::Rr> get_example_records(asio::io_service& io);
 int main() {
     asio::io_service io;
 
-    bighorn::Responder responder(get_example_records(io),
+    bighorn::StaticLookup lookup(get_example_records(io),
                                   std::vector<bighorn::DomainAuthority>{});
+    bighorn::Responder<bighorn::StaticLookup> responder(std::move(lookup));
     bighorn::UdpNameServer server(io, 0, std::move(responder));
+
     asio::co_spawn(io, server.start(), asio::detached);
     std::cout << "Started server on port " << server.port() << "\n";
     io.run();
