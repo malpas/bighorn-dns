@@ -62,7 +62,13 @@ TEST(StandardQueryTest, Example621) {
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::A,
                                 .qclass = bighorn::DnsClass::In};
-    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+    bighorn::Message msg{.header = {.id = 621,
+                                     .qr = 0,
+                                     .opcode = bighorn::Opcode::Query,
+                                     .aa = 0,
+                                     .tc = 0,
+                                     .rd = 0,
+                                     .ra = 0},
                           .questions = {question}};
     auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
@@ -82,7 +88,13 @@ TEST(StandardQueryTest, Example622) {
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::All,
                                 .qclass = bighorn::DnsClass::In};
-    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+    bighorn::Message msg{.header = {.id = 622,
+                                     .qr = 0,
+                                     .opcode = bighorn::Opcode::Query,
+                                     .aa = 0,
+                                     .tc = 0,
+                                     .rd = 0,
+                                     .ra = 0},
                           .questions = {question}};
     auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
@@ -104,7 +116,13 @@ TEST(StandardQueryTest, Example623) {
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::Mx,
                                 .qclass = bighorn::DnsClass::In};
-    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+    bighorn::Message msg{.header = {.id = 623,
+                                     .qr = 0,
+                                     .opcode = bighorn::Opcode::Query,
+                                     .aa = 0,
+                                     .tc = 0,
+                                     .rd = 0,
+                                     .ra = 0},
                           .questions = {question}};
     auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
@@ -127,7 +145,13 @@ TEST(StandardQueryTest, Example624) {
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
                                 .qtype = bighorn::DnsType::Ns,
                                 .qclass = bighorn::DnsClass::In};
-    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+    bighorn::Message msg{.header = {.id = 624,
+                                     .qr = 0,
+                                     .opcode = bighorn::Opcode::Query,
+                                     .aa = 0,
+                                     .tc = 0,
+                                     .rd = 0,
+                                     .ra = 0},
                           .questions = {question}};
     auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
@@ -149,7 +173,13 @@ TEST(StandardQueryTest, Example625) {
     bighorn::Question question{.labels = {"sir-nic", "arpa"},
                                 .qtype = bighorn::DnsType::A,
                                 .qclass = bighorn::DnsClass::In};
-    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+    bighorn::Message msg{.header = {.id = 625,
+                                     .qr = 0,
+                                     .opcode = bighorn::Opcode::Query,
+                                     .aa = 0,
+                                     .tc = 0,
+                                     .rd = 0,
+                                     .ra = 0},
                           .questions = {question}};
     auto result = resolver.respond(msg);
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
@@ -167,7 +197,13 @@ TEST(StandardQueryTest, Example626) {
     bighorn::Question question{.labels = labels,
                                 .qtype = bighorn::DnsType::A,
                                 .qclass = bighorn::DnsClass::In};
-    bighorn::Message msg{.header = {.opcode = bighorn::Opcode::Query},
+    bighorn::Message msg{.header = {.id = 626,
+                                     .qr = 0,
+                                     .opcode = bighorn::Opcode::Query,
+                                     .aa = 0,
+                                     .tc = 0,
+                                     .rd = 0,
+                                     .ra = 0},
                           .questions = {question}};
 
     auto result = resolver.respond(msg);

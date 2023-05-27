@@ -4,9 +4,6 @@
 #include <asio.hpp>
 #include <bighorn/buffer.hpp>
 #include <bighorn/data.hpp>
-#include <istream>
-#include <ostream>
-#include <sstream>
 
 static const std::vector<uint8_t> example_rr = {
     7, 'e', 'x', 'a', 'm', 'p',    'l',    'e', 3, 'c', 'o', 'm', 0, 0,
@@ -19,7 +16,7 @@ static const std::vector<uint8_t> example_header = {
 
 TEST(InputTest, EmptyRr) {
     std::vector<uint8_t> empty_data;
-    bighorn::DataBuffer buffer(&empty_data);
+    bighorn::DataBuffer buffer(empty_data);
 
     bighorn::Rr rr;
     auto err = bighorn::read_rr(buffer, rr);
@@ -28,19 +25,19 @@ TEST(InputTest, EmptyRr) {
 
 TEST(InputTest, CutShortRr) {
     std::vector<uint8_t> data{'\4', 'e', 'x', 'a'};
-    bighorn::DataBuffer buffer(&data);
+    bighorn::DataBuffer buffer(data);
 
     bighorn::Rr rr;
     auto err = bighorn::read_rr(buffer, rr);
     ASSERT_EQ(err, bighorn::MessageError::ReadError);
 }
 
-TEST(InputTest, FullSimpleRr) {
+TEST(InputTest, ExampleRr) {
     bighorn::Rr rr;
-    bighorn::DataBuffer buffer(&example_rr);
+    bighorn::DataBuffer buffer(example_rr);
 
     auto err = bighorn::read_rr(buffer, rr);
-    ASSERT_FALSE(err);
+    EXPECT_EQ(err, std::error_code{});
     ASSERT_THAT(rr.labels, testing::ElementsAre("example", "com"));
     EXPECT_EQ(rr.type, bighorn::DnsType::A);
     EXPECT_EQ(rr.cls, bighorn::DnsClass::In);
@@ -49,7 +46,7 @@ TEST(InputTest, FullSimpleRr) {
 }
 
 TEST(InputTest, FullHeader) {
-    bighorn::DataBuffer buffer(&example_header);
+    bighorn::DataBuffer buffer(example_header);
 
     bighorn::Header header;
     auto err = bighorn::read_header(buffer, header);
@@ -70,7 +67,7 @@ TEST(InputTest, LabelTooLong) {
     for (int i = 0; i < 64; ++i) {
         long_label.push_back('a');
     }
-    bighorn::DataBuffer buffer(&long_label);
+    bighorn::DataBuffer buffer(long_label);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);
@@ -83,7 +80,8 @@ TEST(InputTest, NameTooLong) {
         long_name.push_back(1);
         long_name.push_back('a');
     }
-    bighorn::DataBuffer buffer(&long_name);
+    long_name.push_back(0);
+    bighorn::DataBuffer buffer(long_name);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);
@@ -92,7 +90,7 @@ TEST(InputTest, NameTooLong) {
 
 TEST(InputTest, LabelStartingWithSymbol) {
     static std::vector<uint8_t> invalid_label{4, '-', 'a', 'b', 'c', 0};
-    bighorn::DataBuffer buffer(&invalid_label);
+    bighorn::DataBuffer buffer(invalid_label);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);
@@ -101,7 +99,7 @@ TEST(InputTest, LabelStartingWithSymbol) {
 
 TEST(InputTest, LabelWithInvalidSymbol) {
     static std::vector<uint8_t> invalid_label{4, 'a', '#', 'b', 'c', 0};
-    bighorn::DataBuffer buffer(&invalid_label);
+    bighorn::DataBuffer buffer(invalid_label);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);
@@ -110,7 +108,7 @@ TEST(InputTest, LabelWithInvalidSymbol) {
 
 TEST(InputTest, LabelCanHaveNumbers) {
     static std::vector<uint8_t> invalid_label{4, '1', '2', '3', 'a', 0};
-    bighorn::DataBuffer buffer(&invalid_label);
+    bighorn::DataBuffer buffer(invalid_label);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);
@@ -119,7 +117,7 @@ TEST(InputTest, LabelCanHaveNumbers) {
 
 TEST(InputTest, LabelCanHaveDash) {
     static std::vector<uint8_t> invalid_label{3, 'a', '-', 'b', 0};
-    bighorn::DataBuffer buffer(&invalid_label);
+    bighorn::DataBuffer buffer(invalid_label);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);
@@ -128,7 +126,7 @@ TEST(InputTest, LabelCanHaveDash) {
 
 TEST(InputTest, LabelMustEndInAlnum) {
     static std::vector<uint8_t> invalid_label{3, 'a', 'a', '-', 0};
-    bighorn::DataBuffer buffer(&invalid_label);
+    bighorn::DataBuffer buffer(invalid_label);
 
     std::vector<std::string> labels;
     auto err = bighorn::read_labels(buffer, labels);

@@ -9,7 +9,7 @@ bool is_label_match(std::span<std::string const> labels, const Rr &candidate) {
     if (labels.size() != candidate.labels.size()) {
         return false;
     }
-    for (int i = 0; i < labels.size(); ++i) {
+    for (size_t i = 0; i < labels.size(); ++i) {
         if (labels[i] != candidate.labels[i] && !is_wildcard(labels[i])) {
             return false;
         }
@@ -21,6 +21,9 @@ bool is_authority_match(const std::span<std::string const> labels,
                         const DomainAuthority &authority,
                         const DnsClass dclass) {
     bool match = false;
+    if (authority.dclass != dclass) {
+        return false;
+    }
     if (authority.domain.size() > labels.size()) {
         return false;
     }
@@ -42,6 +45,9 @@ std::vector<Rr> StaticLookup::find_records(std::span<std::string const> labels,
         if (qtype != candidate.type && qtype != DnsType::All) {
             continue;
         }
+        if (qclass != candidate.cls) {
+            continue;
+        }
         if (!is_label_match(labels, candidate)) {
             continue;
         }
@@ -53,7 +59,7 @@ std::vector<DomainAuthority> StaticLookup::find_authorities(
     std::span<std::string const> labels, DnsClass dclass) {
     std::set<DomainAuthority> unique_auths;
     for (auto &authority : authorities_) {
-        if (is_authority_match(labels, authority) &&
+        if (is_authority_match(labels, authority, dclass) &&
             std::find(unique_auths.begin(), unique_auths.end(), authority) ==
                 unique_auths.end()) {
             unique_auths.insert(authority);

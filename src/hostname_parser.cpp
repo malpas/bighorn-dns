@@ -16,7 +16,7 @@ std::error_code parse_hostname(const std::string &hostname, Hostname &domain) {
     }
 
     std::vector<std::string> labels;
-    int i = 0;
+    size_t i = 0;
     while (true) {
         std::stringstream ss;
         if (!std::isalpha(hostname[i])) {

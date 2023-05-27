@@ -9,7 +9,7 @@ namespace bighorn {
 struct DomainAuthority {
     Labels domain;
     Labels name;
-    DnsClass dclass;
+    DnsClass dclass = DnsClass::In;
     std::vector<uint32_t> ips;
     uint32_t ttl;
 
@@ -42,7 +42,7 @@ class StaticLookup : public Lookup {
                                  DnsType qtype, DnsClass qclass);
     std::vector<DomainAuthority> find_authorities(
         std::span<std::string const> labels, DnsClass dclass = DnsClass::In);
-    bool use_recursive;
+    bool use_recursive = false;
 
    private:
     std::vector<Rr> records_;

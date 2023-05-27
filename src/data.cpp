@@ -142,4 +142,142 @@ std::vector<uint8_t> Message::bytes() const {
     return bytes;
 }
 
+std::error_code read_labels(DataBuffer &buffer,
+                            std::vector<std::string> &labels) {
+    int total_len = 0;
+    uint8_t label_len = 0;
+    do {
+        auto err = buffer.read_byte(label_len);
+        if (err) {
+            return err;
+        }
+        total_len += label_len;
+        if (label_len == 0) {
+            break;
+        }
+
+        if (label_len > 63) {
+            return MessageError::LabelTooLong;
+        }
+        if (total_len > 255) {
+            return MessageError::NameTooLong;
+        }
+        std::string label(label_len, '\0');
+        err = buffer.read_n(label_len, label.data());
+        if (err) {
+            return err;
+        }
+        if (!std::isalnum(label[0])) {
+            return MessageError::InvalidLabelChar;
+        }
+        if (!std::all_of(label.begin(), label.end(),
+                         [](char c) { return std::isalnum(c) || c == '-'; })) {
+            return MessageError::InvalidLabelChar;
+        }
+        if (!std::isalnum(label[label.size() - 1])) {
+            return MessageError::InvalidLabelChar;
+        }
+        labels.push_back(label);
+    } while (label_len > 0);
+    return {};
+}
+
+std::error_code read_rr(DataBuffer &buffer, Rr &rr) {
+    std::error_code err;
+
+    err = read_labels(buffer, rr.labels);
+    if (err) {
+        return err;
+    }
+
+    uint16_t bytes = 0;
+    err = buffer.read_number(bytes);
+    if (err) {
+        return err;
+    }
+    rr.type = static_cast<DnsType>(bytes);
+
+    err = buffer.read_number(bytes);
+    if (err) {
+        return err;
+    }
+    rr.cls = static_cast<DnsClass>(bytes);
+
+    err = buffer.read_number(rr.ttl);
+    if (err) {
+        return err;
+    }
+
+    uint16_t rdlength = 0;
+    err = buffer.read_number(rdlength);
+    rr.rdata = std::string(rdlength, '\0');
+    if (err) {
+        return err;
+    }
+    err = buffer.read_n(rdlength, rr.rdata.data());
+    return err;
+}
+
+std::error_code read_header(DataBuffer &stream, Header &header) {
+    std::error_code err;
+    err = stream.read_number(header.id);
+    if (err) {
+        return err;
+    }
+
+    uint16_t meta = 0;
+    err = stream.read_number(meta);
+    if (err) {
+        return err;
+    }
+    header.qr = meta >> 15 & 1;
+    header.opcode = static_cast<Opcode>(meta >> 11 & 0b1111);
+    header.aa = meta >> 10 & 1;
+    header.tc = meta >> 9 & 1;
+    header.rd = meta >> 8 & 1;
+    header.ra = meta >> 7 & 1;
+    header.z = meta >> 4 & 0b111;
+    header.rcode = static_cast<ResponseCode>(meta & 0b1111);
+
+    err = stream.read_number(header.qdcount);
+    if (err) {
+        return err;
+    }
+    err = stream.read_number(header.ancount);
+    if (err) {
+        return err;
+    }
+    err = stream.read_number(header.nscount);
+    if (err) {
+        return err;
+    }
+    err = stream.read_number(header.arcount);
+    if (err) {
+        return err;
+    }
+    return {};
+}
+
+std::error_code read_question(DataBuffer &buffer, Question &question) {
+    std::vector<std::string> labels;
+    auto err = read_labels(buffer, labels);
+    if (err) {
+        return err;
+    }
+    uint16_t qtype = 0;
+    uint16_t qclass = 0;
+    err = buffer.read_number(qtype);
+    if (err) {
+        return err;
+    }
+    err = buffer.read_number(qclass);
+    if (err) {
+        return err;
+    }
+    question = Question{.labels = std::move(labels),
+                        .qtype = static_cast<DnsType>(qtype),
+                        .qclass = static_cast<DnsClass>(qclass)};
+    return {};
+}
+
 }  // namespace bighorn

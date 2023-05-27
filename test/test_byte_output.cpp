@@ -22,7 +22,7 @@ static bighorn::Header example_header = {.id = 1,
 
 TEST(ByteOutputTest, HeaderInOut) {
     auto bytes = example_header.bytes();
-    bighorn::DataBuffer buffer(&bytes);
+    bighorn::DataBuffer buffer(bytes);
 
     bighorn::Header header;
     auto err = bighorn::read_header(buffer, header);
@@ -32,7 +32,7 @@ TEST(ByteOutputTest, HeaderInOut) {
 
 TEST(ByteOutputTest, RrInOut) {
     auto bytes = example_rr.bytes();
-    bighorn::DataBuffer buffer(&bytes);
+    bighorn::DataBuffer buffer(bytes);
 
     bighorn::Rr rr;
     auto err = bighorn::read_rr(buffer, rr);

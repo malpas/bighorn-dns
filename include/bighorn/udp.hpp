@@ -21,7 +21,7 @@ class UdpNameServer {
             while (true) {
                 co_await handle_recv();
             }
-        } catch (std::exception e) {
+        } catch (const std::exception &e) {
             std::cerr << "Exception caught: " << e.what() << "\n";
         }
     }
@@ -32,14 +32,14 @@ class UdpNameServer {
     asio::ip::udp::socket socket_;
     Responder<L> responder_;
     asio::ip::udp::endpoint remote_endpoint_;
-    std::array<char, 512> data_;
+    std::array<uint8_t, 512> data_;
     int port_;
 
     asio::awaitable<void> handle_recv() {
         auto bytes_recv = co_await socket_.async_receive_from(
             asio::buffer(data_), remote_endpoint_, asio::use_awaitable);
         std::error_code err;
-        DataBuffer buffer(&data_);
+        DataBuffer buffer(data_);
         buffer.limit(bytes_recv);
 
         Header header;

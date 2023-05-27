@@ -7,6 +7,12 @@ find_package(asio CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
+if (MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
 enable_testing()
 
 file(GLOB_RECURSE SRC_FILES src/*.cpp)
@@ -25,9 +31,3 @@ target_link_libraries(bighorn_example bighorn)
 
 include(GoogleTest)
 gtest_discover_tests(bighorn_test)
-
-if (MSVC)
-    add_compile_options(/W4)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
