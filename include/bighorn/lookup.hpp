@@ -1,6 +1,9 @@
 #pragma once
+#include <memory>
+#include <optional>
 #include <ranges>
 #include <span>
+#include <unordered_set>
 
 #include "data.hpp"
 
@@ -35,17 +38,23 @@ class Lookup {
 
 class StaticLookup : public Lookup {
    public:
-    StaticLookup(std::vector<Rr> &&records,
-                 std::vector<DomainAuthority> &&authorities)
-        : records_(std::move(records)), authorities_(std::move(authorities)) {}
+    StaticLookup() {}
     std::vector<Rr> find_records(std::span<std::string const> labels,
                                  DnsType qtype, DnsClass qclass);
     std::vector<DomainAuthority> find_authorities(
         std::span<std::string const> labels, DnsClass dclass = DnsClass::In);
     bool use_recursive = false;
 
+    void add_record(Rr record) {
+        records_[labels_to_string(record.labels)].push_back(record);
+    }
+
+    void add_authority(DomainAuthority authority) {
+        authorities_.push_back(authority);
+    }
+
    private:
-    std::vector<Rr> records_;
+    std::unordered_map<std::string, std::vector<Rr>> records_;
     std::vector<DomainAuthority> authorities_;
 };
 

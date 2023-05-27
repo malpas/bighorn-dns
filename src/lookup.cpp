@@ -41,7 +41,7 @@ bool is_authority_match(const std::span<std::string const> labels,
 std::vector<Rr> StaticLookup::find_records(std::span<std::string const> labels,
                                            DnsType qtype, DnsClass qclass) {
     std::vector<Rr> matching_records;
-    for (auto &candidate : records_) {
+    for (auto &candidate : records_[labels_to_string(labels)]) {
         if (qtype != candidate.type && qtype != DnsType::All) {
             continue;
         }

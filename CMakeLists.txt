@@ -19,15 +19,15 @@ file(GLOB_RECURSE SRC_FILES src/*.cpp)
 add_library(bighorn STATIC ${SRC_FILES})
 target_include_directories(bighorn PUBLIC include)
 target_include_directories(bighorn PRIVATE include/bighorn)
-target_link_libraries(bighorn asio::asio)
+target_link_libraries(bighorn PRIVATE asio::asio)
 
 file(GLOB TEST_FILES test/*.cpp)
 add_executable(bighorn_test ${TEST_FILES})
-target_link_libraries(bighorn_test GTest::gtest_main GTest::gmock_main asio::asio bighorn)
+target_link_libraries(bighorn_test PRIVATE GTest::gtest_main GTest::gmock_main asio::asio bighorn)
 
 file(GLOB EXAMPLE_FILES example/udp.cpp)
 add_executable(bighorn_example ${EXAMPLE_FILES})
-target_link_libraries(bighorn_example bighorn)
+target_link_libraries(bighorn_example PRIVATE bighorn asio::asio)
 
 include(GoogleTest)
 gtest_discover_tests(bighorn_test)

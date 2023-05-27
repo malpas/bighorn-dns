@@ -50,8 +50,13 @@ std::vector<bighorn::DomainAuthority> get_test_authorities() {
 }
 
 bighorn::Responder<bighorn::StaticLookup> get_resolver() {
-    auto lookup =
-        bighorn::StaticLookup(get_test_records(), get_test_authorities());
+    auto lookup = bighorn::StaticLookup();
+    for (auto& record : get_test_records()) {
+        lookup.add_record(record);
+    }
+    for (auto& authority : get_test_authorities()) {
+        lookup.add_authority(authority);
+    }
     return bighorn::Responder<bighorn::StaticLookup>(std::move(lookup));
 }
 

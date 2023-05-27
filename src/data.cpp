@@ -125,8 +125,14 @@ std::vector<uint8_t> Question::bytes() const {
 }
 
 std::vector<uint8_t> Message::bytes() const {
+    Header counted_header = header;
+    counted_header.qdcount = questions.size();
+    counted_header.ancount = answers.size();
+    counted_header.nscount = authorities.size();
+    counted_header.arcount = additional.size();
+
     auto bytes = std::vector<uint8_t>();
-    auto header_bytes = header.bytes();
+    auto header_bytes = counted_header.bytes();
     std::copy(header_bytes.begin(), header_bytes.end(),
               std::back_inserter(bytes));
     for (auto &question : questions) {
@@ -139,7 +145,30 @@ std::vector<uint8_t> Message::bytes() const {
         std::copy(answer_bytes.begin(), answer_bytes.end(),
                   std::back_inserter(bytes));
     }
+    for (auto &authority : authorities) {
+        auto auth_bytes = authority.bytes();
+        std::copy(auth_bytes.begin(), auth_bytes.end(),
+                  std::back_inserter(bytes));
+    }
+    for (auto &add : additional) {
+        auto add_bytes = add.bytes();
+        std::copy(add_bytes.begin(), add_bytes.end(),
+                  std::back_inserter(bytes));
+    }
     return bytes;
+}
+
+std::string labels_to_string(std::span<std::string const> labels) {
+    if (labels.size() == 0) {
+        return "";
+    }
+    std::stringstream ss;
+    for (size_t i = 0; i < labels.size(); ++i) {
+        ss << labels[i];
+        ss << ".";
+    }
+    ss << labels.back();
+    return ss.str();
 }
 
 std::error_code read_labels(DataBuffer &buffer,

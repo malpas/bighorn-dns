@@ -52,6 +52,8 @@ enum class ResponseCode : uint8_t {
 
 using Labels = std::vector<std::string>;
 
+std::string labels_to_string(std::span<std::string const> labels);
+
 struct Rr {
     std::vector<std::string> labels;
     DnsType type;
