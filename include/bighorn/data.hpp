@@ -67,6 +67,8 @@ struct Rr {
     static Rr a_record(Labels labels, uint32_t ip, uint32_t ttl);
     static Rr aaaa_record(Labels labels, std::array<uint8_t, 16> ip,
                           uint32_t ttl);
+    static Rr mx_record(Labels labels, uint16_t preference, Labels exchange,
+                        uint32_t ttl, DnsClass cls = DnsClass::In);
     static Rr ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
                         DnsClass cls = DnsClass::In);
 };

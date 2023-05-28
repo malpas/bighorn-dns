@@ -4,11 +4,8 @@
 
 #include <bighorn/data.hpp>
 
-static bighorn::Rr example_rr = {.labels = {"example", "com"},
-                                  .type = bighorn::DnsType::A,
-                                  .cls = bighorn::DnsClass::In,
-                                  .ttl = 3600,
-                                  .rdata = ""};
+static bighorn::Rr example_rr =
+    bighorn::Rr::a_record({"example", "com"}, 0x7F000001, 3600);
 
 static bighorn::Header example_header = {.id = 1,
                                           .qr = 1,

@@ -84,6 +84,23 @@ Rr Rr::aaaa_record(Labels labels, std::array<uint8_t, 16> ip, uint32_t ttl) {
               .rdata = rdata};
 }
 
+Rr Rr::mx_record(Labels labels, uint16_t preference, Labels exchange,
+                 uint32_t ttl, DnsClass cls) {
+    std::vector<uint8_t> data;
+    preference = htons(preference);
+    data.push_back(preference & 0xFF);
+    data.push_back(preference >> 8 & 0xFF);
+    for (auto &ex_label : exchange) {
+        data.push_back(ex_label.size());
+        std::copy(ex_label.begin(), ex_label.end(), std::back_inserter(data));
+    }
+    return Rr{.labels = labels,
+              .type = DnsType::Mx,
+              .cls = cls,
+              .ttl = ttl,
+              .rdata = std::string(data.begin(), data.end())};
+}
+
 Rr Rr::ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
                  DnsClass cls) {
     std::stringstream rdata;

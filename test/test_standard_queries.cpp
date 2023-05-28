@@ -8,23 +8,15 @@
 std::vector<bighorn::Rr> get_test_records() {
     std::vector<bighorn::Rr> records{};
     // Example 6.2.1 && Example 6.2.3
-    records.push_back({.labels = {"sri-nic", "arpa"},
-                       .type = bighorn::DnsType::A,
-                       .cls = bighorn::DnsClass::In,
-                       .ttl = 86400,
-                       .rdata = "\x1a\x00\x00\x49"});
+    records.push_back(
+        bighorn::Rr::a_record({"sri-nic", "arpa"}, 0x1a000049, 86400));
+    records.push_back(
+        bighorn::Rr::a_record({"sri-nic", "arpa"}, 0x0a000033, 86400));
 
-    records.push_back({.labels = {"sri-nic", "arpa"},
-                       .type = bighorn::DnsType::A,
-                       .cls = bighorn::DnsClass::In,
-                       .ttl = 86400,
-                       .rdata = "\x0a\x00\x00\x33"});
     // Example 6.2.2 && Example 6.2.3
-    records.push_back({.labels = {"sri-nic", "arpa"},
-                       .type = bighorn::DnsType::Mx,
-                       .cls = bighorn::DnsClass::In,
-                       .ttl = 86400,
-                       .rdata = "\x00\x00\x07sri-nic\x04arpa\x00"});
+    records.push_back(bighorn::Rr::mx_record({"sri-nic", "arpa"}, 0,
+                                              {"sri-nic", "arpa"}, 86400));
+
     // Example 6.2.2
     records.push_back({.labels = {"sri-nic", "arpa"},
                        .type = bighorn::DnsType::Hinfo,
