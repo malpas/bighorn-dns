@@ -3,14 +3,12 @@
 
 namespace bighorn {
 
-bool is_wildcard(const std::string &s) { return s == "*"; }
-
 bool is_label_match(std::span<std::string const> labels, const Rr &candidate) {
     if (labels.size() != candidate.labels.size()) {
         return false;
     }
     for (size_t i = 0; i < labels.size(); ++i) {
-        if (labels[i] != candidate.labels[i] && !is_wildcard(labels[i])) {
+        if (labels[i] != candidate.labels[i]) {
             return false;
         }
     }
@@ -53,8 +51,37 @@ std::vector<Rr> StaticLookup::find_records(std::span<std::string const> labels,
         }
         matching_records.push_back(candidate);
     }
+    if (labels.size() >= 2 && wildcard_records_.size() > 0) {
+        match_wildcards(labels, qtype, qclass, matching_records);
+    }
     return matching_records;
 }
+
+void StaticLookup::match_wildcards(std::span<std::string const> labels,
+                                   DnsType qtype, DnsClass qclass,
+                                   std::vector<Rr> &matching_records) {
+    for (size_t i = 1; i < labels.size(); ++i) {
+        std::stringstream wild_label;
+        wild_label << "*.";
+        for (size_t j = i; j < labels.size() - 1; ++j) {
+            wild_label << labels[j];
+            wild_label << '.';
+        }
+        wild_label << labels.back();
+        auto possible_records = wildcard_records_.find(wild_label.str());
+        if (possible_records == wildcard_records_.end()) {
+            continue;
+        }
+        auto record_vec = (*possible_records).second;
+        std::copy_if(
+            record_vec.begin(), record_vec.end(),
+            std::back_inserter(matching_records), [&](auto record) {
+                return (record.type == qtype || qtype == DnsType::All) &&
+                       record.cls == qclass;
+            });
+    }
+}
+
 std::vector<DomainAuthority> StaticLookup::find_authorities(
     std::span<std::string const> labels, DnsClass dclass) {
     std::set<DomainAuthority> unique_auths;

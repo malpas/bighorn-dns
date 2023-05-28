@@ -36,6 +36,10 @@ class Responder {
                 }
             }
         }
+        response.header.ancount = response.answers.size();
+        response.header.arcount = response.additional.size();
+        response.header.qdcount = response.questions.size();
+        response.header.nscount = response.authorities.size();
         return response;
     }
 

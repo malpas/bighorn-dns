@@ -19,8 +19,6 @@ struct DomainAuthority {
     auto operator<=>(const DomainAuthority &) const = default;
 };
 
-bool is_wildcard(const std::string &s);
-
 bool is_label_match(std::span<std::string const> labels, const Rr &candidate);
 
 bool is_authority_match(std::span<std::string const> labels,
@@ -47,6 +45,10 @@ class StaticLookup : public Lookup {
 
     void add_record(Rr record) {
         records_[labels_to_string(record.labels)].push_back(record);
+        if (record.labels.at(0) == "*" && record.labels.size() >= 2) {
+            wildcard_records_[labels_to_string(record.labels)].push_back(
+                record);
+        }
     }
 
     void add_authority(DomainAuthority authority) {
@@ -55,7 +57,11 @@ class StaticLookup : public Lookup {
 
    private:
     std::unordered_map<std::string, std::vector<Rr>> records_;
+    std::unordered_map<std::string, std::vector<Rr>> wildcard_records_;
     std::vector<DomainAuthority> authorities_;
+
+    void match_wildcards(std::span<std::string const> labels, DnsType qtype,
+                         DnsClass qclass, std::vector<Rr> &matching_records);
 };
 
 }  // namespace bighorn

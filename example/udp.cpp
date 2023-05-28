@@ -11,6 +11,8 @@ int main() {
     bighorn::StaticLookup lookup;
     lookup.add_record(
         bighorn::Rr::a_record({"abcdef", "abcdef"}, 0x7F000001, 86400));
+    lookup.add_record(bighorn::Rr::a_record({"*", "wildcard-example", "com"},
+                                             0x7F000001, 86400));
     lookup.add_record(bighorn::Rr::aaaa_record(
         {"abcdef", "abcdef"}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
         84600));

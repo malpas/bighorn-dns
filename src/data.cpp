@@ -180,7 +180,7 @@ std::string labels_to_string(std::span<std::string const> labels) {
         return "";
     }
     std::stringstream ss;
-    for (size_t i = 0; i < labels.size(); ++i) {
+    for (size_t i = 0; i < labels.size() - 1; ++i) {
         ss << labels[i];
         ss << ".";
     }
