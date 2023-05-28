@@ -11,7 +11,6 @@
 
 #include "buffer.hpp"
 #include "error.hpp"
-#include "hostname_parser.hpp"
 
 namespace bighorn {
 
