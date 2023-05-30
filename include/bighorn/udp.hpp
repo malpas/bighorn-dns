@@ -1,7 +1,6 @@
 #pragma once
 #include <asio.hpp>
 #include <iostream>
-#include <memory>
 
 #include "responder.hpp"
 
@@ -11,9 +10,10 @@ template <std::derived_from<Lookup> L, class... Args>
 class UdpNameServer {
    public:
     UdpNameServer(asio::io_service &io, int port, Responder<L> &&responder)
-        : socket_(io, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
+        : socket_(io, asio::ip::udp::endpoint(asio::ip::udp::v6(), port)),
           responder_(std::move(responder)) {
-        port_ = socket_.local_endpoint().port();
+        std::error_code ignore_err;
+        socket_.set_option(asio::ip::v6_only(false), ignore_err);
     }
 
     asio::awaitable<void> start() {
@@ -26,14 +26,13 @@ class UdpNameServer {
         }
     }
 
-    int port() { return port_; }
+    int port() { return socket_.local_endpoint().port(); }
 
    private:
     asio::ip::udp::socket socket_;
     Responder<L> responder_;
     asio::ip::udp::endpoint remote_endpoint_;
     std::array<uint8_t, 512> data_;
-    int port_;
 
     asio::awaitable<void> handle_recv() {
         auto bytes_recv = co_await socket_.async_receive_from(
@@ -71,6 +70,7 @@ class UdpNameServer {
         auto response_bytes = response.bytes();
         co_await socket_.async_send_to(asio::buffer(response_bytes),
                                        remote_endpoint_, asio::use_awaitable);
+        std::cout << "Responded to msg\n";
     }
 };
 

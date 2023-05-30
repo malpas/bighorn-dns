@@ -43,7 +43,7 @@ std::vector<Rr> StaticLookup::find_records(std::span<std::string const> labels,
         if (qtype != candidate.type && qtype != DnsType::All) {
             continue;
         }
-        if (qclass != candidate.cls) {
+        if (qclass != candidate.dclass) {
             continue;
         }
         if (!is_label_match(labels, candidate)) {
@@ -77,7 +77,7 @@ void StaticLookup::match_wildcards(std::span<std::string const> labels,
             record_vec.begin(), record_vec.end(),
             std::back_inserter(matching_records), [&](auto record) {
                 return (record.type == qtype || qtype == DnsType::All) &&
-                       record.cls == qclass;
+                       record.dclass == qclass;
             });
     }
 }

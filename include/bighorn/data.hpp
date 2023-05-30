@@ -56,7 +56,7 @@ std::string labels_to_string(std::span<std::string const> labels);
 struct Rr {
     std::vector<std::string> labels;
     DnsType type;
-    DnsClass cls;
+    DnsClass dclass;
     uint32_t ttl;
     std::string rdata;
 
@@ -67,9 +67,9 @@ struct Rr {
     static Rr aaaa_record(Labels labels, std::array<uint8_t, 16> ip,
                           uint32_t ttl);
     static Rr mx_record(Labels labels, uint16_t preference, Labels exchange,
-                        uint32_t ttl, DnsClass cls = DnsClass::In);
+                        uint32_t ttl, DnsClass dclass = DnsClass::In);
     static Rr ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
-                        DnsClass cls = DnsClass::In);
+                        DnsClass dclass = DnsClass::In);
 };
 
 [[nodiscard]] std::error_code read_labels(DataBuffer &buffer,

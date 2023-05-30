@@ -20,7 +20,7 @@ std::vector<bighorn::Rr> get_test_records() {
     // Example 6.2.2
     records.push_back({.labels = {"sri-nic", "arpa"},
                        .type = bighorn::DnsType::Hinfo,
-                       .cls = bighorn::DnsClass::In,
+                       .dclass = bighorn::DnsClass::In,
                        .ttl = 86400,
                        .rdata = "\"DEC-2060.\"TOPS20."});
 

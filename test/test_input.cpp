@@ -40,7 +40,7 @@ TEST(InputTest, ExampleRr) {
     EXPECT_EQ(err, std::error_code{});
     ASSERT_THAT(rr.labels, testing::ElementsAre("example", "com"));
     EXPECT_EQ(rr.type, bighorn::DnsType::A);
-    EXPECT_EQ(rr.cls, bighorn::DnsClass::In);
+    EXPECT_EQ(rr.dclass, bighorn::DnsClass::In);
     EXPECT_EQ(rr.ttl, 3600);
     EXPECT_EQ(rr.rdata, "\1\2\3\4");
 }
