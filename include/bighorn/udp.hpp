@@ -1,6 +1,9 @@
 #pragma once
 #include <asio.hpp>
 #include <iostream>
+#ifndef NDEBUG
+#include <format>
+#endif
 
 #include "responder.hpp"
 
@@ -66,11 +69,31 @@ class UdpNameServer {
             question_rrs.push_back(std::move(question));
         }
         Message request{.header = header, .questions = std::move(question_rrs)};
+#ifndef NDEBUG
+        std::cout << "Received request\n";
+        std::cout << "- Header:\n";
+        std::cout << std::format("   QR={} OP={} AA={} TC={} RD={}\n",
+                                 static_cast<uint8_t>(request.header.qr),
+                                 static_cast<uint8_t>(request.header.opcode),
+                                 static_cast<uint8_t>(request.header.aa),
+                                 static_cast<uint8_t>(request.header.tc),
+                                 static_cast<uint8_t>(request.header.rd));
+        if (request.questions.size() == 0) {
+            std::cout << "- No question\n";
+        } else {
+            auto question = request.questions[0];
+            std::cout << "- Question:\n";
+            std::cout << std::format("    {}\n",
+                                     labels_to_string(question.labels));
+            std::cout << std::format("    CLS={} TYPE={}\n",
+                                     static_cast<uint8_t>(question.qclass),
+                                     static_cast<uint8_t>(question.qtype));
+        }
+#endif
         Message response = co_await responder_.respond(std::move(request));
         auto response_bytes = response.bytes();
         co_await socket_.async_send_to(asio::buffer(response_bytes),
                                        remote_endpoint_, asio::use_awaitable);
-        std::cout << "Responded to msg\n";
     }
 };
 
