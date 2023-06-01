@@ -61,7 +61,7 @@ std::vector<uint8_t> Rr::bytes() const {
 }
 
 Rr Rr::a_record(Labels labels, uint32_t ip, uint32_t ttl) {
-    std::vector<uint8_t> rdata(4, 0);
+    std::vector<uint8_t> rdata;
     rdata.push_back(static_cast<char>(ip >> 24 & 0xFF));
     rdata.push_back(static_cast<char>(ip >> 16 & 0xFF));
     rdata.push_back(static_cast<char>(ip >> 8 & 0xFF));
@@ -91,6 +91,7 @@ Rr Rr::mx_record(Labels labels, uint16_t preference, Labels exchange,
         data.push_back(ex_label.size());
         std::copy(ex_label.begin(), ex_label.end(), std::back_inserter(data));
     }
+    data.push_back(0);
     return Rr{.labels = labels,
               .dtype = DnsType::Mx,
               .dclass = dclass,
