@@ -21,7 +21,7 @@ target_include_directories(bighorn PUBLIC include)
 target_include_directories(bighorn PRIVATE include/bighorn)
 target_link_libraries(bighorn PRIVATE asio::asio)
 
-file(GLOB TEST_FILES test/*.cpp)
+file(GLOB TEST_FILES test/*.cpp test/*.h)
 add_executable(bighorn_test ${TEST_FILES})
 target_link_libraries(bighorn_test PRIVATE GTest::gtest_main GTest::gmock_main asio::asio bighorn)
 

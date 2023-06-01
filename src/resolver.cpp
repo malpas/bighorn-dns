@@ -9,6 +9,8 @@ namespace bighorn {
 
 using asio::ip::udp;
 
+const int MaxSendCount = 3;
+
 template <class CompletionToken>
 auto BasicResolver::async_resolve_server(const DnsServer& server,
                                          const Message& query,
@@ -98,26 +100,29 @@ new_cname:
         asio::cancellation_signal found_signal;
         std::shared_mutex result_mutex;
         std::shared_lock slist_lock(*slist_mutex_);
-        for (auto& server : slist_) {
-            async_resolve_server(server, current_query, timeout,
-                                 asio::bind_cancellation_slot(
-                                     found_signal.slot(), [&](auto message) {
-                                         std::unique_lock lock(result_mutex);
-                                         result = message;
-                                     }));
-        }
-        auto start = std::chrono::steady_clock::now();
-        while (start - std::chrono::steady_clock::now() < timeout) {
-            {
-                std::shared_lock lock(result_mutex);
-                if (result.has_value()) {
-                    break;
-                }
+        for (int send_count = 0; send_count < MaxSendCount; ++send_count) {
+            std::vector<std::future<Message>> futures;
+            for (auto& server : slist_) {
+                auto future = async_resolve_server(
+                    server, current_query, timeout,
+                    asio::bind_cancellation_slot(found_signal.slot(),
+                                                 asio::use_future));
+                futures.push_back(std::move(future));
             }
-            asio::steady_timer timer(io_);
-            timer.expires_from_now(10ms);
-            co_await timer.async_wait(asio::use_awaitable);
+            while (true) {
+                for (auto& future : futures) {
+                    if (future.wait_for(0ms) == std::future_status::ready) {
+                        std::unique_lock lock(result_mutex);
+                        result = future.get();
+                        goto finished;
+                    }
+                }
+                asio::steady_timer timer(io_);
+                timer.expires_from_now(10ms);
+                co_await timer.async_wait(asio::use_awaitable);
+            }
         }
+    finished:
         found_signal.emit(asio::cancellation_type::terminal);
         auto message = result.value();
         for (auto& answer : message.answers) {

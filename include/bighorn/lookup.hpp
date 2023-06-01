@@ -102,7 +102,7 @@ inline asio::awaitable<std::vector<Rr>> RecursiveLookup<R>::find_records(
     std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
     bool recursive) {
     Labels label_vec(labels.begin(), labels.end());
-    return resolver_.resolve(label_vec, qtype, qclass, recursive);
+    return resolver_.resolve(label_vec, qtype, qclass, recursive, timeout_);
 }
 
 }  // namespace bighorn

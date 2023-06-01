@@ -8,6 +8,8 @@
 #include <memory>
 #include <thread>
 
+#include "unreliable_udp_server.hpp"
+
 using asio::ip::tcp;
 using namespace std::chrono_literals;
 
@@ -195,5 +197,4 @@ TEST(ResolutionTest, RecursionNotSupportedByLookup) {
     io.run();
 }
 
-// TODO Test one unreliable server timeout
 // TODO Test only one server selected
