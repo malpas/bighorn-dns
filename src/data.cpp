@@ -28,7 +28,7 @@ std::vector<uint8_t> Rr::bytes() const {
         required_size += 1 + label.length();
     }
     required_size += 10;
-    required_size += rdata.length();
+    required_size += rdata.size();
     bytes.reserve(required_size);
     for (auto &label : labels) {
         bytes.push_back(static_cast<uint8_t>(label.length()));
@@ -38,7 +38,7 @@ std::vector<uint8_t> Rr::bytes() const {
     }
     bytes.push_back(0);
 
-    uint16_t utype = htons(static_cast<uint16_t>(type));
+    uint16_t utype = htons(static_cast<uint16_t>(dtype));
     uint16_t ucls = htons(static_cast<uint16_t>(dclass));
     bytes.push_back(utype & 0xFF);
     bytes.push_back(utype >> 8);
@@ -51,37 +51,34 @@ std::vector<uint8_t> Rr::bytes() const {
     bytes.push_back(uttl >> 16 & 0xFF);
     bytes.push_back(uttl >> 24);
 
-    uint16_t rdlength = htons(static_cast<uint16_t>(rdata.length()));
+    uint16_t rdlength = htons(static_cast<uint16_t>(rdata.size()));
     bytes.push_back(rdlength & 0xFF);
     bytes.push_back(rdlength >> 8);
     for (auto &c : rdata) {
         bytes.push_back(c);
     }
-
     return bytes;
 }
 
 Rr Rr::a_record(Labels labels, uint32_t ip, uint32_t ttl) {
-    std::string rdata(4, 0);
-    rdata[0] = static_cast<char>(ip >> 24 & 0xFF);
-    rdata[1] = static_cast<char>(ip >> 16 & 0xFF);
-    rdata[2] = static_cast<char>(ip >> 8 & 0xFF);
-    rdata[3] = static_cast<char>(ip & 0xFF);
+    std::vector<uint8_t> rdata(4, 0);
+    rdata.push_back(static_cast<char>(ip >> 24 & 0xFF));
+    rdata.push_back(static_cast<char>(ip >> 16 & 0xFF));
+    rdata.push_back(static_cast<char>(ip >> 8 & 0xFF));
+    rdata.push_back(static_cast<char>(ip & 0xFF));
     return Rr{.labels = labels,
-              .type = DnsType::A,
+              .dtype = DnsType::A,
               .dclass = DnsClass::In,
               .ttl = ttl,
               .rdata = rdata};
 }
 
 Rr Rr::aaaa_record(Labels labels, std::array<uint8_t, 16> ip, uint32_t ttl) {
-    std::string rdata(16, 0);
-    std::memcpy(rdata.data(), ip.data(), 16);
     return Rr{.labels = labels,
-              .type = DnsType::Aaaa,
+              .dtype = DnsType::Aaaa,
               .dclass = DnsClass::In,
               .ttl = ttl,
-              .rdata = rdata};
+              .rdata = std::vector<uint8_t>(ip.begin(), ip.end())};
 }
 
 Rr Rr::mx_record(Labels labels, uint16_t preference, Labels exchange,
@@ -95,25 +92,54 @@ Rr Rr::mx_record(Labels labels, uint16_t preference, Labels exchange,
         std::copy(ex_label.begin(), ex_label.end(), std::back_inserter(data));
     }
     return Rr{.labels = labels,
-              .type = DnsType::Mx,
+              .dtype = DnsType::Mx,
               .dclass = dclass,
               .ttl = ttl,
-              .rdata = std::string(data.begin(), data.end())};
+              .rdata = data};
 }
 
 Rr Rr::ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
                  DnsClass dclass) {
-    std::stringstream rdata;
+    std::vector<uint8_t> rdata;
     for (std::string &label : authority_labels) {
-        rdata << static_cast<char>(label.length());
-        rdata << label;
+        rdata.push_back(static_cast<char>(label.length()));
+        std::copy(label.begin(), label.end(), std::back_inserter(rdata));
     }
-    rdata << static_cast<char>(0);
+    rdata.push_back(0);
     return Rr{.labels = labels,
-              .type = DnsType::Ns,
+              .dtype = DnsType::Ns,
               .dclass = dclass,
               .ttl = ttl,
-              .rdata = std::move(rdata.str())};
+              .rdata = rdata};
+}
+
+Rr Rr::cname_record(Labels labels, Labels cname, uint32_t ttl,
+                    DnsClass dclass) {
+    std::vector<uint8_t> rdata;
+    for (std::string &label : cname) {
+        rdata.push_back(static_cast<char>(label.length()));
+        std::copy(label.begin(), label.end(), std::back_inserter(rdata));
+    }
+    rdata.push_back(0);
+    return Rr{.labels = labels,
+              .dtype = DnsType::Cname,
+              .dclass = dclass,
+              .ttl = ttl,
+              .rdata = rdata};
+}
+
+Rr Rr::hinfo_record(Labels labels, std::string cpu, std::string os,
+                    uint32_t ttl, DnsClass dclass) {
+    std::vector<uint8_t> rdata;
+    rdata.push_back(static_cast<uint8_t>(cpu.length()));
+    std::copy(cpu.begin(), cpu.end(), std::back_inserter(rdata));
+    rdata.push_back(static_cast<uint8_t>(os.length()));
+    std::copy(os.begin(), os.end(), std::back_inserter(rdata));
+    return Rr{.labels = labels,
+              .dtype = DnsType::Hinfo,
+              .dclass = dclass,
+              .ttl = ttl,
+              .rdata = rdata};
 }
 
 std::vector<uint8_t> Question::bytes() const {
@@ -241,7 +267,7 @@ std::error_code read_rr(DataBuffer &buffer, Rr &rr) {
     if (err) {
         return err;
     }
-    rr.type = static_cast<DnsType>(bytes);
+    rr.dtype = static_cast<DnsType>(bytes);
 
     err = buffer.read_number(bytes);
     if (err) {
@@ -256,7 +282,7 @@ std::error_code read_rr(DataBuffer &buffer, Rr &rr) {
 
     uint16_t rdlength = 0;
     err = buffer.read_number(rdlength);
-    rr.rdata = std::string(rdlength, '\0');
+    rr.rdata.resize(rdlength);
     if (err) {
         return err;
     }
@@ -323,6 +349,47 @@ std::error_code read_question(DataBuffer &buffer, Question &question) {
     question = Question{.labels = std::move(labels),
                         .qtype = static_cast<DnsType>(qtype),
                         .qclass = static_cast<DnsClass>(qclass)};
+    return {};
+}
+
+std::error_code read_message(DataBuffer &buffer, Message &message) {
+    auto err = read_header(buffer, message.header);
+    if (err) {
+        return err;
+    }
+    auto qdcount = message.header.qdcount;
+    for (size_t i = 0; i < qdcount; ++i) {
+        Question q;
+        err = read_question(buffer, q);
+        if (err) {
+            return err;
+        }
+        message.questions.push_back(q);
+    }
+    for (size_t i = 0; i < message.header.ancount; ++i) {
+        Rr rr;
+        err = read_rr(buffer, rr);
+        if (err) {
+            return err;
+        }
+        message.answers.push_back(rr);
+    }
+    for (size_t i = 0; i < message.header.nscount; ++i) {
+        Rr rr;
+        err = read_rr(buffer, rr);
+        if (err) {
+            return err;
+        }
+        message.authorities.push_back(rr);
+    }
+    for (size_t i = 0; i < message.header.arcount; ++i) {
+        Rr rr;
+        err = read_rr(buffer, rr);
+        if (err) {
+            return err;
+        }
+        message.additional.push_back(rr);
+    }
     return {};
 }
 

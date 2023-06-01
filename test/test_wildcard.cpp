@@ -20,7 +20,11 @@ TEST(WildcardTest, Basic) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = responder.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, responder.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -48,7 +52,11 @@ TEST(WildcardTest, MustMatchClass) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = responder.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, responder.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::NameError);
     EXPECT_EQ(result.header.ancount, 0);
 }
@@ -71,7 +79,11 @@ TEST(WildcardTest, MustMatchType) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = responder.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, responder.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.rcode, bighorn::ResponseCode::Ok);
     EXPECT_EQ(result.header.ancount, 0);
 }
@@ -94,7 +106,11 @@ TEST(WildcardTest, MultipleLabelMatch) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = responder.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, responder.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);

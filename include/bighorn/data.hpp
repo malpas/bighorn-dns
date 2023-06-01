@@ -51,14 +51,17 @@ enum class ResponseCode : uint8_t {
 
 using Labels = std::vector<std::string>;
 
+using Ipv4Type = uint32_t;
+using Ipv6Type = std::array<uint8_t, 16>;
+
 std::string labels_to_string(std::span<std::string const> labels);
 
 struct Rr {
     std::vector<std::string> labels;
-    DnsType type;
+    DnsType dtype;
     DnsClass dclass;
     uint32_t ttl;
-    std::string rdata;
+    std::vector<uint8_t> rdata;
 
     std::vector<uint8_t> bytes() const;
     bool operator==(const Rr &) const = default;
@@ -70,6 +73,10 @@ struct Rr {
                         uint32_t ttl, DnsClass dclass = DnsClass::In);
     static Rr ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
                         DnsClass dclass = DnsClass::In);
+    static Rr cname_record(Labels labels, Labels cname, uint32_t ttl,
+                           DnsClass dclass = DnsClass::In);
+    static Rr hinfo_record(Labels labels, std::string cpu, std::string os,
+                           uint32_t ttl, DnsClass dclass = DnsClass::In);
 };
 
 [[nodiscard]] std::error_code read_labels(DataBuffer &buffer,
@@ -82,12 +89,12 @@ enum class Opcode : uint8_t { Query = 0, Iquery = 1, Status = 2 };
 struct Header {
     uint16_t id;
 
-    uint16_t qr : 1;
+    uint16_t qr : 1 = 0;
     Opcode opcode : 4;
-    uint16_t aa : 1;
-    uint16_t tc : 1;
+    uint16_t aa : 1 = 0;
+    uint16_t tc : 1 = 0;
     uint16_t rd : 1;
-    uint16_t ra : 1;
+    uint16_t ra : 1 = 0;
     uint16_t z : 3 = 0;
     ResponseCode rcode : 4 = ResponseCode::Ok;
 
@@ -121,5 +128,7 @@ struct Message {
     bool operator==(const Message &) const = default;
     std::vector<uint8_t> bytes() const;
 };
+
+std::error_code read_message(DataBuffer &buffer, Message &message);
 
 }  // namespace bighorn

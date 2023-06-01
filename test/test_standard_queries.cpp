@@ -18,11 +18,8 @@ std::vector<bighorn::Rr> get_test_records() {
                                               {"sri-nic", "arpa"}, 86400));
 
     // Example 6.2.2
-    records.push_back({.labels = {"sri-nic", "arpa"},
-                       .type = bighorn::DnsType::Hinfo,
-                       .dclass = bighorn::DnsClass::In,
-                       .ttl = 86400,
-                       .rdata = "\"DEC-2060.\"TOPS20."});
+    records.push_back(bighorn::Rr::hinfo_record({"sri-nic", "arpa"},
+                                                 "DEC-2060", "TOPS20", 86400));
 
     return records;
 }
@@ -42,7 +39,7 @@ std::vector<bighorn::DomainAuthority> get_test_authorities() {
 }
 
 bighorn::Responder<bighorn::StaticLookup> get_resolver() {
-    auto lookup = bighorn::StaticLookup();
+    bighorn::StaticLookup lookup;
     for (auto& record : get_test_records()) {
         lookup.add_record(record);
     }
@@ -67,7 +64,11 @@ TEST(StandardQueryTest, Example621) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = resolver.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, resolver.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -93,7 +94,11 @@ TEST(StandardQueryTest, Example622) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = resolver.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, resolver.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -103,7 +108,7 @@ TEST(StandardQueryTest, Example622) {
     answers.push_back(test_records[1]);
     answers.push_back(test_records[2]);
     answers.push_back(test_records[3]);
-    EXPECT_EQ(result.answers, answers);
+    EXPECT_THAT(result.answers, testing::UnorderedElementsAreArray(answers));
 }
 
 TEST(StandardQueryTest, Example623) {
@@ -121,7 +126,11 @@ TEST(StandardQueryTest, Example623) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = resolver.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, resolver.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -150,7 +159,11 @@ TEST(StandardQueryTest, Example624) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = resolver.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, resolver.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -178,7 +191,11 @@ TEST(StandardQueryTest, Example625) {
                                      .rd = 0,
                                      .ra = 0},
                           .questions = {question}};
-    auto result = resolver.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, resolver.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     EXPECT_EQ(result.header.opcode, bighorn::Opcode::Query);
     EXPECT_EQ(result.header.qr, 1);
     EXPECT_EQ(result.header.aa, 1);
@@ -203,7 +220,11 @@ TEST(StandardQueryTest, Example626) {
                                      .ra = 0},
                           .questions = {question}};
 
-    auto result = resolver.respond(msg);
+    asio::io_context io;
+    auto future = asio::co_spawn(io, resolver.respond(msg), asio::use_future);
+    io.run();
+    future.wait();
+    auto result = future.get();
     ASSERT_EQ(result.header.aa, 0);
 
     auto ns_records = std::vector<bighorn::Rr>{

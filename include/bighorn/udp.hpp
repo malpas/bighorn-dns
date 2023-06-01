@@ -6,10 +6,10 @@
 
 namespace bighorn {
 
-template <std::derived_from<Lookup> L, class... Args>
+template <std::derived_from<Lookup> L>
 class UdpNameServer {
    public:
-    UdpNameServer(asio::io_service &io, int port, Responder<L> &&responder)
+    UdpNameServer(asio::io_service &io, int port, Responder<L> responder)
         : socket_(io, asio::ip::udp::endpoint(asio::ip::udp::v6(), port)),
           responder_(std::move(responder)) {
         std::error_code ignore_err;
@@ -66,7 +66,7 @@ class UdpNameServer {
             question_rrs.push_back(std::move(question));
         }
         Message request{.header = header, .questions = std::move(question_rrs)};
-        Message response = responder_.respond(std::move(request));
+        Message response = co_await responder_.respond(std::move(request));
         auto response_bytes = response.bytes();
         co_await socket_.async_send_to(asio::buffer(response_bytes),
                                        remote_endpoint_, asio::use_awaitable);

@@ -6,8 +6,7 @@
 using asio::ip::tcp;
 
 int main() {
-    asio::io_service io;
-
+    asio::io_context io;
     bighorn::StaticLookup lookup;
     lookup.add_record(
         bighorn::Rr::a_record({"abcdef", "abcdef"}, 0x7F000001, 86400));

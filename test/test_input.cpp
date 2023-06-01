@@ -39,10 +39,10 @@ TEST(InputTest, ExampleRr) {
     auto err = bighorn::read_rr(buffer, rr);
     EXPECT_EQ(err, std::error_code{});
     ASSERT_THAT(rr.labels, testing::ElementsAre("example", "com"));
-    EXPECT_EQ(rr.type, bighorn::DnsType::A);
+    EXPECT_EQ(rr.dtype, bighorn::DnsType::A);
     EXPECT_EQ(rr.dclass, bighorn::DnsClass::In);
     EXPECT_EQ(rr.ttl, 3600);
-    EXPECT_EQ(rr.rdata, "\1\2\3\4");
+    EXPECT_THAT(rr.rdata, testing::ElementsAre(1, 2, 3, 4));
 }
 
 TEST(InputTest, FullHeader) {

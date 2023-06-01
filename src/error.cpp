@@ -2,23 +2,6 @@
 
 namespace bighorn {
 
-const char *HostnameErrorCategory::name() const noexcept {
-    return "host_parse_error";
-}
-
-std::string HostnameErrorCategory::message(int ev) const {
-    switch (static_cast<HostnameError>(ev)) {
-        case HostnameError::Empty:
-            return "empty host name";
-        case HostnameError::InvalidCharacter:
-            return "invalid character";
-        case HostnameError::TooLong:
-            return "too long";
-        default:
-            return "unknown hostname error";
-    }
-}
-
 const char *MessageErrorCategory::name() const noexcept {
     return "message_error";
 }
@@ -38,10 +21,6 @@ std::string MessageErrorCategory::message(int ev) const {
         default:
             return "unknown message error";
     }
-}
-
-std::error_code make_error_code(HostnameError e) {
-    return {static_cast<int>(e), hostnameErrCategory};
 }
 
 std::error_code make_error_code(MessageError e) {
