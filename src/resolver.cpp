@@ -1,8 +1,8 @@
 #include "resolver.hpp"
 
 #include <format>
-#include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <utility>
 
 namespace bighorn {
@@ -51,7 +51,7 @@ auto BasicResolver::async_resolve_server(const DnsServer& server,
             auto err = read_message(data_buf, message);
             if (!message.header.qr) {
                 throw std::runtime_error(
-                    std::format("Received invalid question as response"));
+                    "Received invalid question as response");
             }
             if (err) {
                 throw std::runtime_error(std::format(
@@ -61,8 +61,7 @@ auto BasicResolver::async_resolve_server(const DnsServer& server,
                 std::unique_lock slist_lock(*slist_mutex_);
                 auto i = std::find(slist_.begin(), slist_.end(), server);
                 slist_.erase(i);
-                throw std::runtime_error(
-                    std::format("Removed failing DNS server"));
+                throw std::runtime_error("Removed failing DNS server");
             }
             completion_handler(message);
         };
@@ -97,7 +96,7 @@ new_cname:
 
         std::optional<Message> result;
         asio::cancellation_signal found_signal;
-        std::mutex result_mutex;
+        std::shared_mutex result_mutex;
         std::shared_lock slist_lock(*slist_mutex_);
         for (auto& server : slist_) {
             async_resolve_server(server, current_query, timeout,
@@ -108,8 +107,13 @@ new_cname:
                                      }));
         }
         auto start = std::chrono::steady_clock::now();
-        while (start - std::chrono::steady_clock::now() < timeout &&
-               !result.has_value()) {
+        while (start - std::chrono::steady_clock::now() < timeout) {
+            {
+                std::shared_lock lock(result_mutex);
+                if (result.has_value()) {
+                    break;
+                }
+            }
             asio::steady_timer timer(io_);
             timer.expires_from_now(10ms);
             co_await timer.async_wait(asio::use_awaitable);
