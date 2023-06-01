@@ -25,24 +25,25 @@ class Responder {
         if (lookup_.supports_recursion()) {
             response.header.ra = 1;
         }
-        for (auto &question : query.questions) {
-            auto records = co_await lookup_.find_records(
-                question.labels, question.qtype, question.qclass);
-            std::copy(records.begin(), records.end(),
-                      std::back_inserter(response.answers));
-            if (question.qtype == DnsType::Mx) {
-                co_await add_additional_records_for_mx(question.labels,
-                                                       response);
-            }
-            if (records.size() == 0) {
-                check_authorities(question, response);
-            }
-            if (response.authorities.size() == 0) {
-                auto all_related_records = co_await lookup_.find_records(
-                    question.labels, DnsType::All, question.qclass);
-                if (all_related_records.size() == 0) {
-                    response.header.rcode = ResponseCode::NameError;
-                }
+        if (query.questions.size() == 0) {
+            co_return response;
+        }
+        auto question = query.questions[0];
+        auto records = co_await lookup_.find_records(
+            question.labels, question.qtype, question.qclass);
+        std::copy(records.begin(), records.end(),
+                  std::back_inserter(response.answers));
+        if (question.qtype == DnsType::Mx) {
+            co_await add_additional_records_for_mx(question.labels, response);
+        }
+        if (records.size() == 0) {
+            check_authorities(question, response);
+        }
+        if (response.authorities.size() == 0) {
+            auto all_related_records = co_await lookup_.find_records(
+                question.labels, DnsType::All, question.qclass);
+            if (all_related_records.size() == 0) {
+                response.header.rcode = ResponseCode::NameError;
             }
         }
         response.header.ancount = response.answers.size();
