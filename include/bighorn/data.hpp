@@ -117,7 +117,8 @@ struct Question {
     std::vector<uint8_t> bytes() const;
 };
 
-std::error_code read_question(DataBuffer &buffer, Question &question);
+[[nodiscard]] std::error_code read_question(DataBuffer &buffer,
+                                            Question &question);
 
 struct Message {
     Header header;
@@ -129,6 +130,7 @@ struct Message {
     std::vector<uint8_t> bytes() const;
 };
 
-std::error_code read_message(DataBuffer &buffer, Message &message);
+[[nodiscard]] std::error_code read_message(DataBuffer &buffer,
+                                           Message &message);
 
 }  // namespace bighorn
