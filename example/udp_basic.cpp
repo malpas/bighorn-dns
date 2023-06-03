@@ -3,8 +3,6 @@
 #include <bighorn/udp.hpp>
 #include <iostream>
 
-using asio::ip::tcp;
-
 int main() {
     asio::io_context io;
     bighorn::StaticLookup lookup;
@@ -20,8 +18,8 @@ int main() {
                                   .name = {"a", "root-servers", "net"},
                                   .ips = {0xC6290004},
                                   .ttl = 86400});
-    bighorn::Responder<bighorn::StaticLookup> responder(std::move(lookup));
-    bighorn::UdpNameServer server(io, 0, std::move(responder));
+    bighorn::Responder<bighorn::StaticLookup> responder(lookup);
+    bighorn::UdpNameServer server(io, 0, responder);
 
     asio::co_spawn(io, server.start(), asio::detached);
     std::cout << "Started server on port " << server.port() << "\n";

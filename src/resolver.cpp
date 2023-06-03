@@ -55,14 +55,14 @@ auto BasicResolver::async_resolve_server(const DnsServer& server,
         DataBuffer data_buf(response, received_bytes);
         Message message;
         auto err = read_message(data_buf, message);
+        if (err) {
+            completion_handler(empty_message, err);
+            return;
+        }
         if (!message.header.qr) {
             completion_handler(empty_message, ResolutionError::InvalidResponse);
             return;
         }
-        if (err) {
-            completion_handler(empty_message, err);
-            return;
-        };
         if (message.header.rcode == ResponseCode::ServerFailure) {
             std::unique_lock slist_lock(*slist_mutex_);
             auto i = std::find(slist_.begin(), slist_.end(), server);
@@ -98,63 +98,76 @@ asio::awaitable<std::vector<Rr>> BasicResolver::resolve(
 
     Message current_query = query;
     DnsServer answering_server;
-    int switch_count = 0;
+    int switches_left = 10;
 new_cname:
-    while (switch_count < 10) {
-        ++switch_count;
-
-        std::optional<Message> result;
-        std::mutex result_mutex;
-
-        for (int send_count = 0; send_count < MaxSendCount; ++send_count) {
-            asio::cancellation_signal found_signal;
-            int start_count = 0;
-            std::atomic_int finish_count = 0;
-            std::atomic_int success_count = 0;
-            {
-                std::shared_lock slist_lock(*slist_mutex_);
-                for (auto& server : slist_) {
-                    ++start_count;
-                    async_resolve_server(
-                        server, current_query, timeout,
-                        asio::bind_cancellation_slot(
-                            found_signal.slot(),
-                            [&](Message message, std::error_code err) {
-                                if (!err) {
-                                    std::unique_lock result_lock(result_mutex);
-                                    result = message;
-                                    ++success_count;
-                                }
-                                ++finish_count;
-                            }));
-                }
-            }
-            while (start_count != finish_count && success_count == 0) {
-                asio::steady_timer timer(io_);
-                timer.expires_from_now(10ms);
-                co_await timer.async_wait(asio::use_awaitable);
-            }
-        }
-        auto message = result.value();
-        for (auto& answer : message.answers) {
-            if (answer.dtype == DnsType::Cname) {
-                Labels cname;
-                DataBuffer buffer(answer.rdata);
-                auto err = read_labels(buffer, cname);
-                if (err) {
-                    throw std::runtime_error("Server returned invalid labels");
-                }
-                if (current_query.questions.at(0).labels != cname) {
-                    current_query.questions.at(0).labels = std::move(cname);
-                }
-                goto new_cname;
-            }
-        }
-        std::copy(message.answers.begin(), message.answers.end(),
-                  std::back_inserter(records));
-        co_return records;
+    if (switches_left == 0) {
+        throw std::runtime_error("Recursion limit hit");
     }
-    throw std::runtime_error("Recursion limit hit");
+
+    std::optional<Message> result;
+    std::mutex result_mutex;
+
+    for (int send_count = 0; send_count < MaxSendCount; ++send_count) {
+        asio::cancellation_signal found_signal;
+        int start_count = 0;
+        std::atomic_int finish_count = 0;
+        std::atomic_int success_count = 0;
+        {
+            std::shared_lock slist_lock(*slist_mutex_);
+            for (auto& server : slist_) {
+                ++start_count;
+                async_resolve_server(
+                    server, current_query, timeout,
+                    asio::bind_cancellation_slot(
+                        found_signal.slot(),
+                        [&](Message message, std::error_code err) {
+                            ++finish_count;
+                            if (err) {
+                                return;
+                            }
+                            std::unique_lock result_lock(result_mutex);
+                            if (result.has_value()) {
+                                return;
+                            }
+                            found_signal.emit(
+                                asio::cancellation_type::terminal);
+                            result = message;
+                            ++success_count;
+                        }));
+            }
+        }
+        while (start_count != finish_count && success_count == 0) {
+            if (success_count) {
+                goto finished;
+            }
+            asio::steady_timer timer(io_);
+            timer.expires_from_now(10ms);
+            co_await timer.async_wait(asio::use_awaitable);
+        }
+    }
+finished:
+    if (!result.has_value()) {
+        throw std::runtime_error("Resolution failed");
+    }
+    auto message = result.value();
+    for (auto& answer : message.answers) {
+        if (answer.dtype == DnsType::Cname) {
+            Labels cname;
+            DataBuffer buffer(answer.rdata);
+            auto err = read_labels(buffer, cname);
+            if (err) {
+                throw std::runtime_error("Server returned invalid labels");
+            }
+            if (current_query.questions.at(0).labels != cname) {
+                current_query.questions.at(0).labels = std::move(cname);
+            }
+            --switches_left;
+            goto new_cname;
+        }
+    }
+    std::copy(message.answers.begin(), message.answers.end(),
+              std::back_inserter(records));
+    co_return records;
 }
 
 }  // namespace bighorn

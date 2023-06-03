@@ -18,33 +18,39 @@ class Responder {
         response.header = query.header;
         response.header.qr = 1;
         response.header.aa = 1;
-        if (!lookup_.supports_recursion() && query.header.rd) {
-            response.header.rcode = ResponseCode::NotImplemented;
-            co_return response;
-        }
-        if (lookup_.supports_recursion()) {
-            response.header.ra = 1;
-        }
-        if (query.questions.size() == 0) {
-            co_return response;
-        }
-        auto question = query.questions[0];
-        auto records = co_await lookup_.find_records(
-            question.labels, question.qtype, question.qclass);
-        std::copy(records.begin(), records.end(),
-                  std::back_inserter(response.answers));
-        if (question.qtype == DnsType::Mx) {
-            co_await add_additional_records_for_mx(question.labels, response);
-        }
-        if (records.size() == 0) {
-            check_authorities(question, response);
-        }
-        if (response.authorities.size() == 0) {
-            auto all_related_records = co_await lookup_.find_records(
-                question.labels, DnsType::All, question.qclass);
-            if (all_related_records.size() == 0) {
-                response.header.rcode = ResponseCode::NameError;
+        response.header.z = 0;  // No extensions currently supported
+        try {
+            if (!lookup_.supports_recursion() && query.header.rd) {
+                response.header.rcode = ResponseCode::NotImplemented;
+                co_return response;
             }
+            if (lookup_.supports_recursion()) {
+                response.header.ra = 1;
+            }
+            if (query.questions.size() == 0) {
+                co_return response;
+            }
+            auto question = query.questions[0];
+            auto records = co_await lookup_.find_records(
+                question.labels, question.qtype, question.qclass);
+            std::copy(records.begin(), records.end(),
+                      std::back_inserter(response.answers));
+            if (question.qtype == DnsType::Mx) {
+                co_await add_additional_records_for_mx(question.labels,
+                                                       response);
+            }
+            if (records.size() == 0) {
+                check_authorities(question, response);
+                if (response.authorities.size() == 0) {
+                    auto all_related_records = co_await lookup_.find_records(
+                        question.labels, DnsType::All, question.qclass);
+                    if (all_related_records.size() == 0) {
+                        response.header.rcode = ResponseCode::NameError;
+                    }
+                }
+            }
+        } catch (std::exception &e) {
+            response.header.rcode = ResponseCode::ServerFailure;
         }
         response.header.ancount = response.answers.size();
         response.header.arcount = response.additional.size();

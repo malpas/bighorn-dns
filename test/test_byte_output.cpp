@@ -36,3 +36,16 @@ TEST(ByteOutputTest, RrInOut) {
     ASSERT_FALSE(err);
     ASSERT_EQ(rr, example_rr);
 }
+
+TEST(ByteOutputTest, ALabel) {
+    std::vector<uint8_t> expected_bytes{
+        7, 'e', 'x', 'a', 'm',    'p',  'l', 'e',  3,    'c',  'o', 'm',
+        0, 1,   0,   1,   0b1110, 0x10, 4,   0x7F, 0x00, 0x00, 0x01};
+    auto bytes = example_rr.bytes();
+    bighorn::DataBuffer buffer(bytes);
+
+    bighorn::Rr rr;
+    auto err = bighorn::read_rr(buffer, rr);
+    ASSERT_FALSE(err);
+    ASSERT_EQ(rr, example_rr);
+}

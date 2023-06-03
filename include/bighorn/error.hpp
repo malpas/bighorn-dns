@@ -9,7 +9,8 @@ enum class MessageError {
     ReadError,
     InvalidLabelChar,
     LabelTooLong,
-    NameTooLong
+    NameTooLong,
+    JumpLimit
 };
 
 enum class ResolutionError {

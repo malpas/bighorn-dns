@@ -5,6 +5,8 @@
 
 namespace bighorn {
 
+const int PointerJumpLimit = 100;
+
 std::vector<uint8_t> Header::bytes() const {
     uint16_t meta = qr << 15 | static_cast<uint16_t>(opcode) << 11 | aa << 10 |
                     tc << 9 | rd << 8 | ra << 7 | z << 4 |
@@ -218,11 +220,32 @@ std::string labels_to_string(std::span<std::string const> labels) {
 std::error_code read_labels(DataBuffer &buffer,
                             std::vector<std::string> &labels) {
     int total_len = 0;
+    int jumps = 0;
     uint8_t label_len = 0;
+    size_t buffer_end_i = buffer.pos();
     do {
+        if (jumps > PointerJumpLimit) {
+            return MessageError::JumpLimit;
+        }
         auto err = buffer.read_byte(label_len);
         if (err) {
             return err;
+        }
+        if (jumps == 0) {
+            buffer_end_i += 1;
+        }
+        if (label_len >> 6 == 0b11) {  // Next byte is continuation of pointer
+            uint16_t offset = (label_len & 0b00111111) << 8;
+            uint8_t second_byte;
+            auto err = buffer.read_byte(second_byte);
+            if (err) {
+                return err;
+            }
+            offset |= second_byte;
+            buffer.seek(second_byte);
+            ++jumps;
+            buffer_end_i += 1;
+            continue;
         }
         total_len += label_len;
         if (label_len == 0) {
@@ -237,6 +260,9 @@ std::error_code read_labels(DataBuffer &buffer,
         }
         std::string label(label_len, '\0');
         err = buffer.read_n(label_len, label.data());
+        if (jumps == 0) {
+            buffer_end_i += label_len;
+        }
         if (err) {
             return err;
         }
@@ -252,6 +278,8 @@ std::error_code read_labels(DataBuffer &buffer,
         }
         labels.push_back(label);
     } while (label_len > 0);
+
+    buffer.seek(buffer_end_i);
     return {};
 }
 

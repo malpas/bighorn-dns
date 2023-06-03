@@ -18,6 +18,8 @@ std::string MessageErrorCategory::message(int ev) const {
             return "label longer than 63 octets";
         case MessageError::NameTooLong:
             return "name longer than 255 octets";
+        case MessageError::JumpLimit:
+            return "too many pointer jumps";
         default:
             return "unknown message error";
     }

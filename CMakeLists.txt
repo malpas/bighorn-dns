@@ -25,9 +25,13 @@ file(GLOB TEST_FILES test/*.cpp test/*.h)
 add_executable(bighorn_test ${TEST_FILES})
 target_link_libraries(bighorn_test PRIVATE GTest::gtest_main GTest::gmock_main asio::asio bighorn)
 
-file(GLOB EXAMPLE_FILES example/udp.cpp)
-add_executable(bighorn_example ${EXAMPLE_FILES})
-target_link_libraries(bighorn_example PRIVATE bighorn asio::asio)
+file(GLOB EXAMPLE_FILES example/udp_basic.cpp)
+add_executable(bighorn_example_basic ${EXAMPLE_FILES})
+target_link_libraries(bighorn_example_basic PRIVATE bighorn asio::asio)
+
+file(GLOB EXAMPLE_FILES example/udp_recursive.cpp)
+add_executable(bighorn_example_recursive ${EXAMPLE_FILES})
+target_link_libraries(bighorn_example_recursive PRIVATE bighorn asio::asio)
 
 include(GoogleTest)
 gtest_discover_tests(bighorn_test)

@@ -54,6 +54,8 @@ class DataBuffer {
         return err;
     }
 
+    size_t pos() { return i_; }
+    void seek(size_t i) { i_ = i; }
     void limit(uint8_t limit) { limit_ = limit; }
 
    private:
