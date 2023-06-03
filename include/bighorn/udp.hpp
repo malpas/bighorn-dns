@@ -92,6 +92,10 @@ class UdpNameServer {
 #endif
         Message response = co_await responder_.respond(std::move(request));
         auto response_bytes = response.bytes();
+        if (response_bytes.size() > 512) {
+            response.header.tc = 1;
+            response_bytes.resize(512);
+        }
         co_await socket_.async_send_to(asio::buffer(response_bytes),
                                        remote_endpoint_, asio::use_awaitable);
     }
