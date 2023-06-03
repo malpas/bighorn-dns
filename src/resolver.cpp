@@ -1,8 +1,9 @@
 #include "resolver.hpp"
 
+#include <atomic>
 #include <format>
+#include <mutex>
 #include <optional>
-#include <shared_mutex>
 #include <utility>
 
 namespace bighorn {
@@ -16,58 +17,64 @@ auto BasicResolver::async_resolve_server(const DnsServer& server,
                                          const Message& query,
                                          std::chrono::milliseconds timeout,
                                          CompletionToken&& token) {
-    auto init =
-        [&](asio::completion_handler_for<void(Message)> auto completion_handler,
-            const DnsServer& server, const Message& query) {
-            udp::socket socket(io_);
-            udp::endpoint endpoint;
-            if (std::holds_alternative<Ipv4Type>(server.ip)) {
-                endpoint = udp::endpoint(
-                    asio::ip::address_v4(std::get<Ipv4Type>(server.ip)),
-                    server.port);
-                socket.open(udp::v4());
-            } else if (std::holds_alternative<Ipv6Type>(server.ip)) {
-                endpoint = udp::endpoint(
-                    asio::ip::address_v6(std::get<Ipv6Type>(server.ip)),
-                    server.port);
-                socket.open(udp::v6());
-            } else {
-                throw std::runtime_error("Unknown IP type");
-            }
+    auto init = [&](asio::completion_handler_for<void(
+                        Message, std::error_code)> auto completion_handler,
+                    const DnsServer& server, const Message& query) {
+        udp::socket socket(io_);
+        udp::endpoint endpoint;
+        if (std::holds_alternative<Ipv4Type>(server.ip)) {
+            endpoint = udp::endpoint(
+                asio::ip::address_v4(std::get<Ipv4Type>(server.ip)),
+                server.port);
+            socket.open(udp::v4());
+        } else if (std::holds_alternative<Ipv6Type>(server.ip)) {
+            endpoint = udp::endpoint(
+                asio::ip::address_v6(std::get<Ipv6Type>(server.ip)),
+                server.port);
+            socket.open(udp::v6());
+        } else {
+            throw std::runtime_error("Unknown IP type");
+        }
 
-            auto send_future = socket.async_send_to(asio::buffer(query.bytes()),
-                                                    endpoint, asio::use_future);
-            if (send_future.wait_for(timeout) != std::future_status::ready) {
-                throw std::runtime_error("Server timed out");
-            }
-            std::array<uint8_t, 512> response;
-            auto read_future = socket.async_receive_from(
-                asio::buffer(response), endpoint, asio::use_future);
-            if (read_future.wait_for(timeout) != std::future_status::ready) {
-                throw std::runtime_error("Server timed out");
-            }
-            auto received_bytes = read_future.get();
+        Message empty_message;
+        auto send_future = socket.async_send_to(asio::buffer(query.bytes()),
+                                                endpoint, asio::use_future);
+        if (send_future.wait_for(timeout) != std::future_status::ready) {
+            completion_handler(empty_message, ResolutionError::Timeout);
+            return;
+        }
+        std::array<uint8_t, 512> response;
+        auto read_future = socket.async_receive_from(
+            asio::buffer(response), endpoint, asio::use_future);
+        if (read_future.wait_for(timeout) != std::future_status::ready) {
+            completion_handler(empty_message, ResolutionError::Timeout);
+            return;
+        }
+        auto received_bytes = read_future.get();
 
-            DataBuffer data_buf(response, received_bytes);
-            Message message;
-            auto err = read_message(data_buf, message);
-            if (!message.header.qr) {
-                throw std::runtime_error(
-                    "Received invalid question as response");
-            }
-            if (err) {
-                throw std::runtime_error(std::format(
-                    "Could not read recursed message: {}", err.message()));
-            };
-            if (message.header.rcode == ResponseCode::ServerFailure) {
-                std::unique_lock slist_lock(*slist_mutex_);
-                auto i = std::find(slist_.begin(), slist_.end(), server);
-                slist_.erase(i);
-                throw std::runtime_error("Removed failing DNS server");
-            }
-            completion_handler(message);
+        DataBuffer data_buf(response, received_bytes);
+        Message message;
+        auto err = read_message(data_buf, message);
+        if (!message.header.qr) {
+            completion_handler(empty_message, ResolutionError::InvalidResponse);
+            return;
+        }
+        if (err) {
+            completion_handler(empty_message, err);
+            return;
         };
-    return asio::async_initiate<CompletionToken, void(Message)>(init, token,
+        if (message.header.rcode == ResponseCode::ServerFailure) {
+            std::unique_lock slist_lock(*slist_mutex_);
+            auto i = std::find(slist_.begin(), slist_.end(), server);
+            slist_.erase(i);
+
+            completion_handler(empty_message, ResolutionError::RemoteFailure);
+            return;
+        }
+        completion_handler(message, std::error_code{});
+    };
+    return asio::async_initiate<CompletionToken,
+                                void(Message, std::error_code)>(init, token,
                                                                 server, query);
 }
 
@@ -97,33 +104,37 @@ new_cname:
         ++switch_count;
 
         std::optional<Message> result;
-        asio::cancellation_signal found_signal;
-        std::shared_mutex result_mutex;
-        std::shared_lock slist_lock(*slist_mutex_);
+        std::mutex result_mutex;
+
         for (int send_count = 0; send_count < MaxSendCount; ++send_count) {
-            std::vector<std::future<Message>> futures;
-            for (auto& server : slist_) {
-                auto future = async_resolve_server(
-                    server, current_query, timeout,
-                    asio::bind_cancellation_slot(found_signal.slot(),
-                                                 asio::use_future));
-                futures.push_back(std::move(future));
-            }
-            while (true) {
-                for (auto& future : futures) {
-                    if (future.wait_for(0ms) == std::future_status::ready) {
-                        std::unique_lock lock(result_mutex);
-                        result = future.get();
-                        goto finished;
-                    }
+            asio::cancellation_signal found_signal;
+            int start_count = 0;
+            std::atomic_int finish_count = 0;
+            std::atomic_int success_count = 0;
+            {
+                std::shared_lock slist_lock(*slist_mutex_);
+                for (auto& server : slist_) {
+                    ++start_count;
+                    async_resolve_server(
+                        server, current_query, timeout,
+                        asio::bind_cancellation_slot(
+                            found_signal.slot(),
+                            [&](Message message, std::error_code err) {
+                                if (!err) {
+                                    std::unique_lock result_lock(result_mutex);
+                                    result = message;
+                                    ++success_count;
+                                }
+                                ++finish_count;
+                            }));
                 }
+            }
+            while (start_count != finish_count && success_count == 0) {
                 asio::steady_timer timer(io_);
                 timer.expires_from_now(10ms);
                 co_await timer.async_wait(asio::use_awaitable);
             }
         }
-    finished:
-        found_signal.emit(asio::cancellation_type::terminal);
         auto message = result.value();
         for (auto& answer : message.answers) {
             if (answer.dtype == DnsType::Cname) {

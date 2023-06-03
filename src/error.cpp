@@ -27,4 +27,27 @@ std::error_code make_error_code(MessageError e) {
     return {static_cast<int>(e), msgErrCategory};
 }
 
+std::error_code make_error_code(bighorn::ResolutionError e) {
+    return {static_cast<int>(e), resolutionErrCategory};
+}
+
+const char *ResolutionErrorCategory::name() const noexcept {
+    return "resolution_error";
+}
+
+std::string ResolutionErrorCategory::message(int ev) const {
+    switch (static_cast<ResolutionError>(ev)) {
+        case ResolutionError::InvalidResponse:
+            return "received invalid response";
+        case ResolutionError::RecursionLimit:
+            return "hit recusion limit";
+        case ResolutionError::RemoteFailure:
+            return "remote server sent failure";
+        case ResolutionError::Timeout:
+            return "remote server timed out";
+        default:
+            return "unknown resolution error";
+    }
+}
+
 }  // namespace bighorn
