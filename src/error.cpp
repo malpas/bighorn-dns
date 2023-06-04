@@ -45,6 +45,8 @@ std::string ResolutionErrorCategory::message(int ev) const {
             return "hit recusion limit";
         case ResolutionError::RemoteFailure:
             return "remote server sent failure";
+        case ResolutionError::RemoteRefused:
+            return "remote server refused request";
         case ResolutionError::Timeout:
             return "remote server timed out";
         default:

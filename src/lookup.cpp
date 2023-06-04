@@ -36,7 +36,7 @@ bool is_authority_match(const std::span<std::string const> labels,
     return match;
 }
 
-asio::awaitable<std::vector<Rr>> StaticLookup::find_records(
+asio::awaitable<FoundRecords> StaticLookup::find_records(
     std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
     bool use_recursion) {
     std::vector<Rr> matching_records;
@@ -59,7 +59,7 @@ asio::awaitable<std::vector<Rr>> StaticLookup::find_records(
     if (labels.size() >= 2 && wildcard_records_.size() > 0) {
         match_wildcards(labels, qtype, qclass, matching_records);
     }
-    co_return matching_records;
+    co_return FoundRecords{.records = matching_records, .err = {}};
 }
 
 void StaticLookup::match_wildcards(std::span<std::string const> labels,

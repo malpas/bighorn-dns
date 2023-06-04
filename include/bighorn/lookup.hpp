@@ -30,9 +30,14 @@ bool is_authority_match(std::span<std::string const> labels,
                         const DomainAuthority &authority,
                         DnsClass dclass = DnsClass::In);
 
+struct FoundRecords {
+    std::vector<Rr> records;
+    std::error_code err;
+};
+
 class Lookup {
    public:
-    virtual asio::awaitable<std::vector<Rr>> find_records(
+    virtual asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
         bool recursive = false) = 0;
     virtual std::vector<DomainAuthority> find_authorities(
@@ -44,7 +49,7 @@ class Lookup {
 class StaticLookup : public Lookup {
    public:
     StaticLookup() {}
-    asio::awaitable<std::vector<Rr>> find_records(
+    asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
         bool recursive = false);
     std::vector<DomainAuthority> find_authorities(
@@ -80,7 +85,7 @@ class RecursiveLookup : public Lookup {
                     std::chrono::milliseconds timeout = 5s)
         : io_(io), resolver_(std::move(resolver)), timeout_(timeout) {}
 
-    asio::awaitable<std::vector<Rr>> find_records(
+    asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
         bool recursive = false);
 
@@ -98,11 +103,17 @@ class RecursiveLookup : public Lookup {
 };
 
 template <std::derived_from<Resolver> R>
-inline asio::awaitable<std::vector<Rr>> RecursiveLookup<R>::find_records(
+inline asio::awaitable<FoundRecords> RecursiveLookup<R>::find_records(
     std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
     bool recursive) {
     Labels label_vec(labels.begin(), labels.end());
-    return resolver_.resolve(label_vec, qtype, qclass, recursive, timeout_);
+    Resolution resolution = co_await resolver_.resolve(label_vec, qtype, qclass,
+                                                       recursive, timeout_);
+    std::error_code err;
+    if (resolution.rcode == ResponseCode::Refused) {
+        err = ResolutionError::RemoteRefused;
+    }
+    co_return FoundRecords{.records = resolution.records, .err = err};
 }
 
 }  // namespace bighorn

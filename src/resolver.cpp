@@ -78,7 +78,7 @@ auto BasicResolver::async_resolve_server(const DnsServer& server,
                                                                 server, query);
 }
 
-asio::awaitable<std::vector<Rr>> BasicResolver::resolve(
+asio::awaitable<Resolution> BasicResolver::resolve(
     std::vector<std::string> labels, DnsType qtype,
     DnsClass qclass = DnsClass::In, bool request_recursion,
     std::chrono::milliseconds timeout) {
@@ -167,7 +167,7 @@ finished:
     }
     std::copy(message.answers.begin(), message.answers.end(),
               std::back_inserter(records));
-    co_return records;
+    co_return Resolution{.records = records, .rcode = message.header.rcode};
 }
 
 }  // namespace bighorn

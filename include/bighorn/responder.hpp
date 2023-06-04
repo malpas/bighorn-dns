@@ -19,20 +19,24 @@ class Responder {
         response.header.qr = 1;
         response.header.aa = 1;
         response.header.z = 0;  // No extensions currently supported
+        if (lookup_.supports_recursion()) {
+            response.header.ra = 1;
+        } else if (!lookup_.supports_recursion() && query.header.rd) {
+            response.header.rcode = ResponseCode::NotImplemented;
+            co_return response;
+        }
+        if (query.questions.size() == 0) {
+            co_return response;
+        }
         try {
-            if (!lookup_.supports_recursion() && query.header.rd) {
-                response.header.rcode = ResponseCode::NotImplemented;
-                co_return response;
-            }
-            if (lookup_.supports_recursion()) {
-                response.header.ra = 1;
-            }
-            if (query.questions.size() == 0) {
-                co_return response;
-            }
             auto question = query.questions[0];
-            auto records = co_await lookup_.find_records(
+            auto found_records = co_await lookup_.find_records(
                 question.labels, question.qtype, question.qclass);
+            if (found_records.err == ResolutionError::RemoteRefused) {
+                response.header.rcode = ResponseCode::Refused;
+                co_return response;
+            }
+            auto records = found_records.records;
             std::copy(records.begin(), records.end(),
                       std::back_inserter(response.answers));
             if (question.qtype == DnsType::Mx) {
@@ -44,7 +48,7 @@ class Responder {
                 if (response.authorities.size() == 0) {
                     auto all_related_records = co_await lookup_.find_records(
                         question.labels, DnsType::All, question.qclass);
-                    if (all_related_records.size() == 0) {
+                    if (all_related_records.records.size() == 0) {
                         response.header.rcode = ResponseCode::NameError;
                     }
                 }
@@ -64,9 +68,9 @@ class Responder {
 
     asio::awaitable<void> add_additional_records_for_mx(
         std::span<std::string const> labels, Message &response) {
-        auto records =
+        auto found_records =
             co_await lookup_.find_records(labels, DnsType::A, DnsClass::In);
-        for (auto &record : records) {
+        for (auto &record : found_records.records) {
             response.additional.push_back(record);
         }
         co_return;

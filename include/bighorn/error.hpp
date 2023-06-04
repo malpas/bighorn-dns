@@ -18,6 +18,7 @@ enum class ResolutionError {
     Timeout,
     RecursionLimit,
     RemoteFailure,
+    RemoteRefused,
 };
 
 struct MessageErrorCategory : std::error_category {

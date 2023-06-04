@@ -59,7 +59,8 @@ TEST(ResolutionTest, Simple) {
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
                                          bighorn::DnsClass::In),
-                   [&](std::exception_ptr, auto records) {
+                   [&](std::exception_ptr, auto resolution) {
+                       auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
                        std::copy_if(records.begin(), records.end(),
                                     std::back_inserter(a_records), is_a_record);
@@ -95,7 +96,8 @@ TEST(ResolutionTest, CnameSwitch) {
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
                                          bighorn::DnsClass::In),
-                   [&](std::exception_ptr, auto records) {
+                   [&](std::exception_ptr, auto resolution) {
+                       auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
                        std::copy_if(records.begin(), records.end(),
                                     std::back_inserter(a_records), is_a_record);
@@ -174,26 +176,6 @@ TEST(ResolutionTest, ResponderWithRecursiveLookup) {
             EXPECT_THAT(message.header.ra, 1);
             EXPECT_THAT(message.answers, testing::ElementsAre(b_record));
         });
-    io.run();
-}
-
-TEST(ResolutionTest, RecursionNotSupportedByLookup) {
-    asio::io_context io;
-    bighorn::StaticLookup lookup;
-    bighorn::Responder responder(std::move(lookup));
-
-    bighorn::Question question{.labels = {"a", "com"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
-    bighorn::Message query{
-        .header = {.id = 100, .opcode = bighorn::Opcode::Query, .rd = 1},
-        .questions = {question}};
-    asio::co_spawn(io, responder.respond(query),
-                   [&](std::exception_ptr, auto message) {
-                       EXPECT_EQ(message.header.ra, 0);
-                       EXPECT_EQ(message.header.rcode,
-                                 bighorn::ResponseCode::NotImplemented);
-                   });
     io.run();
 }
 

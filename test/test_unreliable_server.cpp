@@ -24,7 +24,8 @@ TEST(UnreliableServerTest, VerySlowServer) {
         .port = unreliable_server.port(),
         .conn_method = bighorn::ServerConnMethod::Udp};
     bighorn::RecursiveLookup<bighorn::BasicResolver> test_lookup(
-        io, bighorn::BasicResolver(io, {server}), std::chrono::seconds(1));
+        io, bighorn::BasicResolver(io, {server}),
+        std::chrono::milliseconds(100));
     bighorn::Responder<decltype(test_lookup)> responder(
         std::move(test_lookup));
     bighorn::Question question{.labels = {"a", "com"},

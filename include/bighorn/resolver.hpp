@@ -23,9 +23,14 @@ struct DnsServer {
     bool operator==(const DnsServer&) const = default;
 };
 
+struct Resolution {
+    std::vector<Rr> records;
+    ResponseCode rcode;
+};
+
 class Resolver {
    public:
-    virtual asio::awaitable<std::vector<Rr>> resolve(
+    virtual asio::awaitable<Resolution> resolve(
         Labels labels, DnsType qtype, DnsClass qclass,
         bool request_recursion = false,
         std::chrono::milliseconds timeout = 5s) = 0;
@@ -38,9 +43,10 @@ class BasicResolver : public Resolver {
           slist_(servers),
           slist_mutex_(std::make_unique<std::shared_mutex>()) {}
 
-    asio::awaitable<std::vector<Rr>> resolve(
-        Labels labels, DnsType qtype, DnsClass qclass,
-        bool request_recursion = false, std::chrono::milliseconds timeout = 5s);
+    asio::awaitable<Resolution> resolve(Labels labels, DnsType qtype,
+                                        DnsClass qclass,
+                                        bool request_recursion = false,
+                                        std::chrono::milliseconds timeout = 5s);
 
    private:
     asio::io_context& io_;
