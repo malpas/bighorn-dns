@@ -11,7 +11,7 @@ class RecursiveLookup : public Lookup {
 
     asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
-        bool recursive = false);
+        bool recursive);
 
     std::vector<DomainAuthority> find_authorities(std::span<std::string const>,
                                                   DnsClass) {
@@ -29,10 +29,10 @@ class RecursiveLookup : public Lookup {
 template <std::derived_from<Resolver> R>
 inline asio::awaitable<FoundRecords> RecursiveLookup<R>::find_records(
     std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
-    bool recursive) {
+    bool /*recursive*/) {
     Labels label_vec(labels.begin(), labels.end());
-    Resolution resolution = co_await resolver_.resolve(label_vec, qtype, qclass,
-                                                       recursive, timeout_);
+    Resolution resolution =
+        co_await resolver_.resolve(label_vec, qtype, qclass, true, timeout_);
     std::error_code err;
     if (resolution.rcode == ResponseCode::Refused) {
         err = ResolutionError::RemoteRefused;
@@ -40,4 +40,4 @@ inline asio::awaitable<FoundRecords> RecursiveLookup<R>::find_records(
     co_return FoundRecords{.records = resolution.records, .err = err};
 }
 
-}
+}  // namespace bighorn

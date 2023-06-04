@@ -23,7 +23,8 @@ TEST(UnreliableServerTest, VerySlowServer) {
     auto server = bighorn::DnsServer{
         .ip = asio::ip::address_v4::from_string("127.0.0.1").to_uint(),
         .port = unreliable_server.port(),
-        .conn_method = bighorn::ServerConnMethod::Udp};
+        .conn_method = bighorn::ServerConnMethod::Udp,
+        .recursive = false};
     bighorn::RecursiveLookup<bighorn::BasicResolver> test_lookup(
         io, bighorn::BasicResolver(io, {server}),
         std::chrono::milliseconds(100));

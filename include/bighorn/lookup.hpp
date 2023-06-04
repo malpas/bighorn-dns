@@ -40,7 +40,7 @@ class Lookup {
    public:
     virtual asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
-        bool recursive = false) = 0;
+        bool recursive) = 0;
     virtual std::vector<DomainAuthority> find_authorities(
         std::span<std::string const> labels,
         DnsClass dclass = DnsClass::In) = 0;

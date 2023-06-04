@@ -20,6 +20,7 @@ struct DnsServer {
     std::variant<Ipv4Type, Ipv6Type> ip;
     int port = 53;
     ServerConnMethod conn_method;
+    bool recursive;
     bool operator==(const DnsServer&) const = default;
 };
 
@@ -31,8 +32,7 @@ struct Resolution {
 class Resolver {
    public:
     virtual asio::awaitable<Resolution> resolve(
-        Labels labels, DnsType qtype, DnsClass qclass,
-        bool request_recursion = false,
+        Labels labels, DnsType qtype, DnsClass qclass, bool recursion_desired,
         std::chrono::milliseconds timeout = 5s) = 0;
 };
 
@@ -44,8 +44,7 @@ class BasicResolver : public Resolver {
           slist_mutex_(std::make_unique<std::shared_mutex>()) {}
 
     asio::awaitable<Resolution> resolve(Labels labels, DnsType qtype,
-                                        DnsClass qclass,
-                                        bool request_recursion = false,
+                                        DnsClass qclass, bool recursion_desired,
                                         std::chrono::milliseconds timeout = 5s);
 
    private:
@@ -54,9 +53,9 @@ class BasicResolver : public Resolver {
     std::unique_ptr<std::shared_mutex> slist_mutex_;
 
     template <class CompletionToken>
-    auto async_resolve_server(const DnsServer& server, const Message& query,
-                              std::chrono::milliseconds timeout,
-                              CompletionToken&& token);
+    auto async_query_server(const DnsServer& server, Message query,
+                            std::chrono::milliseconds timeout,
+                            CompletionToken&& token);
 };
 
 }  // namespace bighorn

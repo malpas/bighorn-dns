@@ -7,11 +7,12 @@
 
 int main() {
     asio::io_context io;
-    auto cloudflare_server =
+    auto local_server =
         bighorn::DnsServer{.ip = 0x7F000001u,
                             .port = 1044,
-                            .conn_method = bighorn::ServerConnMethod::Udp};
-    auto resolver = bighorn::BasicResolver(io, {cloudflare_server});
+                            .conn_method = bighorn::ServerConnMethod::Udp,
+                            .recursive = true};
+    auto resolver = bighorn::BasicResolver(io, {local_server});
     bighorn::RecursiveLookup<bighorn::BasicResolver> lookup(
         io, std::move(resolver));
     bighorn::Responder<decltype(lookup)> responder(std::move(lookup));

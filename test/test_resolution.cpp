@@ -55,12 +55,13 @@ TEST(ResolutionTest, Simple) {
     auto server_ref = bighorn::DnsServer{
         .ip = asio::ip::address_v4::from_string("127.0.0.1").to_uint(),
         .port = server.port(),
-        .conn_method = bighorn::ServerConnMethod::Udp};
+        .conn_method = bighorn::ServerConnMethod::Udp,
+        .recursive = false};
     bighorn::BasicResolver test_resolver(io, {server_ref});
     bighorn::Labels example{"abcd", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In),
+                                         bighorn::DnsClass::In, false),
                    [&](std::exception_ptr, auto resolution) {
                        auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
@@ -92,12 +93,13 @@ TEST(ResolutionTest, CnameSwitch) {
     auto server = bighorn::DnsServer{
         .ip = asio::ip::address_v4::from_string("127.0.0.1").to_uint(),
         .port = example_server.port(),
-        .conn_method = bighorn::ServerConnMethod::Udp};
+        .conn_method = bighorn::ServerConnMethod::Udp,
+        .recursive = false};
     bighorn::BasicResolver test_resolver(io, {server});
     bighorn::Labels example{"alias", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In),
+                                         bighorn::DnsClass::In, false),
                    [&](std::exception_ptr, auto resolution) {
                        auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
@@ -130,12 +132,13 @@ TEST(ResolutionTest, NoInfiniteRecursion) {
     auto server = bighorn::DnsServer{
         .ip = asio::ip::address_v4::from_string("127.0.0.1").to_uint(),
         .port = example_server.port(),
-        .conn_method = bighorn::ServerConnMethod::Udp};
+        .conn_method = bighorn::ServerConnMethod::Udp,
+        .recursive = false};
     bighorn::BasicResolver test_resolver(io, {server});
     bighorn::Labels example{"a", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In),
+                                         bighorn::DnsClass::In, false),
                    [&](std::exception_ptr, auto) {
                        cancel_server.emit(asio::cancellation_type::terminal);
                    });
@@ -161,7 +164,8 @@ TEST(ResolutionTest, ResponderWithRecursiveLookup) {
     auto server = bighorn::DnsServer{
         .ip = asio::ip::address_v4::from_string("127.0.0.1").to_uint(),
         .port = example_server.port(),
-        .conn_method = bighorn::ServerConnMethod::Udp};
+        .conn_method = bighorn::ServerConnMethod::Udp,
+        .recursive = false};
     bighorn::RecursiveLookup<bighorn::BasicResolver> test_lookup(
         io, bighorn::BasicResolver(io, {server}));
     bighorn::Responder<decltype(test_lookup)> responder(

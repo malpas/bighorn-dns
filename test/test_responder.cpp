@@ -18,11 +18,11 @@ TEST(ResponderTest, RecursionNotSupportedByLookup) {
         .labels = {"a", "com"}, .qtype = DnsType::A, .qclass = DnsClass::In};
     Message query{.header = {.id = 100, .opcode = Opcode::Query, .rd = 1},
                   .questions = {question}};
-    asio::co_spawn(
-        io, responder.respond(query), [&](std::exception_ptr, auto message) {
-            EXPECT_EQ(message.header.ra, 0);
-            EXPECT_EQ(message.header.rcode, ResponseCode::NotImplemented);
-        });
+    asio::co_spawn(io, responder.respond(query),
+                   [&](std::exception_ptr, auto message) {
+                       EXPECT_EQ(message.header.ra, 0);
+                       EXPECT_EQ(message.header.rcode, ResponseCode::Refused);
+                   });
     io.run();
 }
 

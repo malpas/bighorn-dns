@@ -22,7 +22,7 @@ class Responder {
         if (lookup_.supports_recursion()) {
             response.header.ra = 1;
         } else if (!lookup_.supports_recursion() && query.header.rd) {
-            response.header.rcode = ResponseCode::NotImplemented;
+            response.header.rcode = ResponseCode::Refused;
             co_return response;
         }
         if (query.questions.size() == 0) {
@@ -30,8 +30,10 @@ class Responder {
         }
         try {
             auto question = query.questions[0];
+            auto recursion_desired = query.header.rd == 1;
             auto found_records = co_await lookup_.find_records(
-                question.labels, question.qtype, question.qclass);
+                question.labels, question.qtype, question.qclass,
+                recursion_desired);
             if (found_records.err == ResolutionError::RemoteRefused) {
                 response.header.rcode = ResponseCode::Refused;
                 co_return response;
@@ -40,14 +42,15 @@ class Responder {
             std::copy(records.begin(), records.end(),
                       std::back_inserter(response.answers));
             if (question.qtype == DnsType::Mx) {
-                co_await add_additional_records_for_mx(question.labels,
-                                                       response);
+                co_await add_additional_records_for_mx(
+                    question.labels, response, recursion_desired);
             }
             if (records.size() == 0) {
                 check_authorities(question, response);
                 if (response.authorities.size() == 0) {
                     auto all_related_records = co_await lookup_.find_records(
-                        question.labels, DnsType::All, question.qclass);
+                        question.labels, DnsType::All, question.qclass,
+                        recursion_desired);
                     if (all_related_records.records.size() == 0) {
                         response.header.rcode = ResponseCode::NameError;
                     }
@@ -67,9 +70,10 @@ class Responder {
     L lookup_;
 
     asio::awaitable<void> add_additional_records_for_mx(
-        std::span<std::string const> labels, Message &response) {
-        auto found_records =
-            co_await lookup_.find_records(labels, DnsType::A, DnsClass::In);
+        std::span<std::string const> labels, Message &response,
+        bool recursive) {
+        auto found_records = co_await lookup_.find_records(
+            labels, DnsType::A, DnsClass::In, recursive);
         for (auto &record : found_records.records) {
             response.additional.push_back(record);
         }

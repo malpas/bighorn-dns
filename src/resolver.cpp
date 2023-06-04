@@ -13,13 +13,14 @@ using asio::ip::udp;
 const int MaxSendCount = 3;
 
 template <class CompletionToken>
-auto BasicResolver::async_resolve_server(const DnsServer& server,
-                                         const Message& query,
-                                         std::chrono::milliseconds timeout,
-                                         CompletionToken&& token) {
+auto BasicResolver::async_query_server(const DnsServer& server, Message query,
+                                       std::chrono::milliseconds timeout,
+                                       CompletionToken&& token) {
     auto init = [&](asio::completion_handler_for<void(
                         Message, std::error_code)> auto completion_handler,
-                    const DnsServer& server, const Message& query) {
+                    const DnsServer& server, Message query) {
+        query.header.rd = server.recursive;
+
         udp::socket socket(io_);
         udp::endpoint endpoint;
         if (std::holds_alternative<Ipv4Type>(server.ip)) {
@@ -79,9 +80,8 @@ auto BasicResolver::async_resolve_server(const DnsServer& server,
 }
 
 asio::awaitable<Resolution> BasicResolver::resolve(
-    std::vector<std::string> labels, DnsType qtype,
-    DnsClass qclass = DnsClass::In, bool request_recursion,
-    std::chrono::milliseconds timeout) {
+    std::vector<std::string> labels, DnsType qtype, DnsClass qclass,
+    bool request_recursion, std::chrono::milliseconds timeout) {
     std::vector<Rr> records;
 
     Question question{.labels = labels, .qtype = qtype, .qclass = qclass};
@@ -116,7 +116,7 @@ new_cname:
             std::shared_lock slist_lock(*slist_mutex_);
             for (auto& server : slist_) {
                 ++start_count;
-                async_resolve_server(
+                async_query_server(
                     server, current_query, timeout,
                     asio::bind_cancellation_slot(
                         found_signal.slot(),
