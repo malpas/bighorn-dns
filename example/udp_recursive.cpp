@@ -1,5 +1,6 @@
 #include <asio.hpp>
 #include <format>
+#include <bighorn/recursive_lookup.hpp>
 #include <bighorn/udp.hpp>
 #include <iostream>
 #include <thread>

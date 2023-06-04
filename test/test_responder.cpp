@@ -5,6 +5,7 @@
 #include <functional>
 #include <bighorn/resolver.hpp>
 #include <bighorn/responder.hpp>
+#include <bighorn/static_lookup.hpp>
 
 using namespace bighorn;
 

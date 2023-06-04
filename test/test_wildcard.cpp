@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <bighorn/responder.hpp>
+#include <bighorn/static_lookup.hpp>
 
 TEST(WildcardTest, Basic) {
     bighorn::StaticLookup lookup;

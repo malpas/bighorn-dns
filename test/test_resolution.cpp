@@ -3,7 +3,9 @@
 
 #include <asio.hpp>
 #include <functional>
+#include <bighorn/recursive_lookup.hpp>
 #include <bighorn/resolver.hpp>
+#include <bighorn/static_lookup.hpp>
 #include <bighorn/udp.hpp>
 #include <memory>
 #include <thread>

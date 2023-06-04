@@ -1,5 +1,6 @@
 #include <asio.hpp>
 #include <format>
+#include <bighorn/static_lookup.hpp>
 #include <bighorn/udp.hpp>
 #include <iostream>
 

@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <bighorn/responder.hpp>
+#include <bighorn/static_lookup.hpp>
 
 // See section 6.2 of RFC 1034
 

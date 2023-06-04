@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <asio.hpp>
+#include <bighorn/recursive_lookup.hpp>
 #include <bighorn/resolver.hpp>
 #include <bighorn/udp.hpp>
 #include <thread>
