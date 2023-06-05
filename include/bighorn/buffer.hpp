@@ -39,9 +39,8 @@ class DataBuffer {
             out = ntohs(out);
         } else if constexpr (sizeof(T) == 4) {
             out = ntohl(out);
-        } else if constexpr (sizeof(T) == 1) {
         } else {
-            static_assert(false);
+            static_assert(sizeof(T) == 1);
         }
         return {};
     }
