@@ -37,10 +37,10 @@ class Resolver {
         std::chrono::milliseconds timeout) = 0;
 };
 
-class BasicResolver : public Resolver {
+class DefaultResolver : public Resolver {
    public:
-    explicit BasicResolver(asio::io_context& io,
-                           std::vector<DnsServer> servers = {})
+    explicit DefaultResolver(asio::io_context& io,
+                             std::vector<DnsServer> servers = {})
         : io_(io),
           slist_(std::move(servers)),
           slist_mutex_(std::make_unique<std::shared_mutex>()) {}

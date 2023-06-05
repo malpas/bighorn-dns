@@ -13,9 +13,9 @@ using asio::ip::udp;
 const int MaxSendCount = 3;
 
 template <class CompletionToken>
-auto BasicResolver::async_query_server(const DnsServer& server, Message query,
-                                       std::chrono::milliseconds timeout,
-                                       CompletionToken&& token) {
+auto DefaultResolver::async_query_server(const DnsServer& server, Message query,
+                                         std::chrono::milliseconds timeout,
+                                         CompletionToken&& token) {
     auto init = [&](asio::completion_handler_for<void(
                         Message, std::error_code)> auto completion_handler,
                     const DnsServer& server, Message query) {
@@ -79,7 +79,7 @@ auto BasicResolver::async_query_server(const DnsServer& server, Message query,
                                                                 server, query);
 }
 
-asio::awaitable<Resolution> BasicResolver::resolve(
+asio::awaitable<Resolution> DefaultResolver::resolve(
     std::vector<std::string> labels, RrType qtype, RrClass qclass,
     bool request_recursion, std::chrono::milliseconds timeout) {
     std::vector<Rr> records;

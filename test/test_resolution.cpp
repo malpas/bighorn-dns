@@ -2,11 +2,11 @@
 #include <gtest/gtest.h>
 
 #include <asio.hpp>
-#include <functional>
 #include <bighorn/recursive_lookup.hpp>
 #include <bighorn/resolver.hpp>
 #include <bighorn/static_lookup.hpp>
 #include <bighorn/udp.hpp>
+#include <functional>
 #include <memory>
 #include <thread>
 
@@ -57,7 +57,7 @@ TEST(ResolutionTest, Simple) {
         .port = server.port(),
         .conn_method = bighorn::ServerConnMethod::Udp,
         .recursive = false};
-    bighorn::BasicResolver test_resolver(io, {server_ref});
+    bighorn::DefaultResolver test_resolver(io, {server_ref});
     bighorn::Labels example{"abcd", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::RrType::All,
@@ -95,7 +95,7 @@ TEST(ResolutionTest, CnameSwitch) {
         .port = example_server.port(),
         .conn_method = bighorn::ServerConnMethod::Udp,
         .recursive = false};
-    bighorn::BasicResolver test_resolver(io, {server});
+    bighorn::DefaultResolver test_resolver(io, {server});
     bighorn::Labels example{"alias", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::RrType::All,
@@ -115,10 +115,8 @@ TEST(ResolutionTest, CnameSwitch) {
 TEST(ResolutionTest, NoInfiniteRecursion) {
     asio::io_context io;
     bighorn::StaticLookup lookup;
-    auto cname_a =
-        bighorn::Rr::cname_record({"a", "com"}, {"b", "com"}, 86400);
-    auto cname_b =
-        bighorn::Rr::cname_record({"b", "com"}, {"a", "com"}, 86400);
+    auto cname_a = bighorn::Rr::cname_record({"a", "com"}, {"b", "com"}, 86400);
+    auto cname_b = bighorn::Rr::cname_record({"b", "com"}, {"a", "com"}, 86400);
     auto example_server = make_dns_server(io, {cname_a, cname_b});
     asio::cancellation_signal cancel_server;
 
@@ -134,7 +132,7 @@ TEST(ResolutionTest, NoInfiniteRecursion) {
         .port = example_server.port(),
         .conn_method = bighorn::ServerConnMethod::Udp,
         .recursive = false};
-    bighorn::BasicResolver test_resolver(io, {server});
+    bighorn::DefaultResolver test_resolver(io, {server});
     bighorn::Labels example{"a", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::RrType::All,
@@ -148,8 +146,7 @@ TEST(ResolutionTest, NoInfiniteRecursion) {
 TEST(ResolutionTest, ResponderWithRecursiveLookup) {
     asio::io_context io;
     bighorn::StaticLookup lookup;
-    auto cname_a =
-        bighorn::Rr::cname_record({"a", "com"}, {"b", "com"}, 86400);
+    auto cname_a = bighorn::Rr::cname_record({"a", "com"}, {"b", "com"}, 86400);
     auto b_record = bighorn::Rr::a_record({"b", "com"}, 0x01020304, 86400);
     auto example_server = make_dns_server(io, {cname_a, b_record});
 
@@ -166,13 +163,12 @@ TEST(ResolutionTest, ResponderWithRecursiveLookup) {
         .port = example_server.port(),
         .conn_method = bighorn::ServerConnMethod::Udp,
         .recursive = false};
-    bighorn::RecursiveLookup<bighorn::BasicResolver> test_lookup(
-        io, bighorn::BasicResolver(io, {server}));
-    bighorn::Responder<decltype(test_lookup)> responder(
-        std::move(test_lookup));
+    bighorn::RecursiveLookup<bighorn::DefaultResolver> test_lookup(
+        io, bighorn::DefaultResolver(io, {server}));
+    bighorn::Responder<decltype(test_lookup)> responder(std::move(test_lookup));
     bighorn::Question question{.labels = {"a", "com"},
-                                .qtype = bighorn::RrType::A,
-                                .qclass = bighorn::RrClass::In};
+                               .qtype = bighorn::RrType::A,
+                               .qclass = bighorn::RrClass::In};
     bighorn::Message query{
         .header = {.id = 100, .opcode = bighorn::Opcode::Query, .rd = 1},
         .questions = {question}};

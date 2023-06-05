@@ -57,10 +57,10 @@ void run_server(const bighorn::IpType& remote_ip, int port, int remote_port,
     asio::io_context io;
     auto cloudflare_server =
         bighorn::DnsServer{.ip = remote_ip,
-                            .port = remote_port,
-                            .conn_method = bighorn::ServerConnMethod::Udp,
-                            .recursive = !no_rec};
-    bighorn::BasicResolver resolver(io, {cloudflare_server});
+                           .port = remote_port,
+                           .conn_method = bighorn::ServerConnMethod::Udp,
+                           .recursive = !no_rec};
+    bighorn::DefaultResolver resolver(io, {cloudflare_server});
     bighorn::RecursiveLookup lookup(io, std::move(resolver));
     bighorn::Responder responder(std::move(lookup));
 

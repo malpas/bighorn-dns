@@ -25,14 +25,13 @@ TEST(UnreliableServerTest, VerySlowServer) {
         .port = unreliable_server.port(),
         .conn_method = bighorn::ServerConnMethod::Udp,
         .recursive = false};
-    bighorn::RecursiveLookup<bighorn::BasicResolver> test_lookup(
-        io, bighorn::BasicResolver(io, {server}),
+    bighorn::RecursiveLookup<bighorn::DefaultResolver> test_lookup(
+        io, bighorn::DefaultResolver(io, {server}),
         std::chrono::milliseconds(100));
-    bighorn::Responder<decltype(test_lookup)> responder(
-        std::move(test_lookup));
+    bighorn::Responder<decltype(test_lookup)> responder(std::move(test_lookup));
     bighorn::Question question{.labels = {"a", "com"},
-                                .qtype = bighorn::RrType::A,
-                                .qclass = bighorn::RrClass::In};
+                               .qtype = bighorn::RrType::A,
+                               .qclass = bighorn::RrClass::In};
     bighorn::Message query{
         .header = {.id = 100, .opcode = bighorn::Opcode::Query, .rd = 1},
         .questions = {question}};
