@@ -3,6 +3,7 @@
   "name": "bighorn-dns",
   "dependencies": [
     "gtest",
-    "asio"
+    "asio",
+    "argparse"
   ]
 }

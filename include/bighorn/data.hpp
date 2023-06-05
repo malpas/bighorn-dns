@@ -51,6 +51,7 @@ using Labels = std::vector<std::string>;
 
 using Ipv4Type = uint32_t;
 using Ipv6Type = std::array<uint8_t, 16>;
+using IpType = std::variant<Ipv4Type, Ipv6Type>;
 
 std::string labels_to_string(std::span<std::string const> labels);
 

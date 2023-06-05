@@ -5,13 +5,14 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(asio CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
+find_package(argparse CONFIG REQUIRED)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 if (MSVC)
     add_compile_options(/W4)
-else()
+else ()
     add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+endif ()
 
 enable_testing()
 
@@ -27,7 +28,7 @@ target_link_libraries(bighorn_test PRIVATE GTest::gtest_main GTest::gmock_main a
 
 file(GLOB EXAMPLE_FILES example/udp_basic.cpp)
 add_executable(bighorn_example_basic ${EXAMPLE_FILES})
-target_link_libraries(bighorn_example_basic PRIVATE bighorn asio::asio)
+target_link_libraries(bighorn_example_basic PRIVATE argparse::argparse bighorn asio::asio)
 
 file(GLOB EXAMPLE_FILES example/udp_recursive.cpp)
 add_executable(bighorn_example_recursive ${EXAMPLE_FILES})
