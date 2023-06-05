@@ -1,5 +1,7 @@
-.vscode
 vcpkg_installed
 build
+cmake-build*
 release
 .cache
+.vscode
+.idea

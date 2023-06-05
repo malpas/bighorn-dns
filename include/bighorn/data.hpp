@@ -1,11 +1,9 @@
 #pragma once
 #include <arpa/inet.h>
-#include <stdint.h>
 
 #include <array>
 #include <asio.hpp>
-#include <istream>
-#include <memory>
+#include <cstdint>
 #include <sstream>
 #include <string>
 
@@ -63,7 +61,7 @@ struct Rr {
     uint32_t ttl;
     std::vector<uint8_t> rdata;
 
-    std::vector<uint8_t> bytes() const;
+    [[nodiscard]] std::vector<uint8_t> bytes() const;
     bool operator==(const Rr &) const = default;
 
     static Rr a_record(Labels labels, uint32_t ip, uint32_t ttl);
@@ -103,7 +101,7 @@ struct Header {
     uint16_t nscount = 0;
     uint16_t arcount = 0;
 
-    std::vector<uint8_t> bytes() const;
+    [[nodiscard]] std::vector<uint8_t> bytes() const;
     bool operator==(const Header &) const = default;
 };
 
@@ -114,7 +112,7 @@ struct Question {
     DnsType qtype;
     DnsClass qclass;
     auto operator<=>(const Question &) const = default;
-    std::vector<uint8_t> bytes() const;
+    [[nodiscard]] std::vector<uint8_t> bytes() const;
 };
 
 [[nodiscard]] std::error_code read_question(DataBuffer &buffer,
@@ -127,7 +125,7 @@ struct Message {
     std::vector<Rr> authorities{};
     std::vector<Rr> additional{};
     bool operator==(const Message &) const = default;
-    std::vector<uint8_t> bytes() const;
+    [[nodiscard]] std::vector<uint8_t> bytes() const;
 };
 
 [[nodiscard]] std::error_code read_message(DataBuffer &buffer,

@@ -4,6 +4,7 @@
 #include <shared_mutex>
 #include <span>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -33,19 +34,20 @@ class Resolver {
    public:
     virtual asio::awaitable<Resolution> resolve(
         Labels labels, DnsType qtype, DnsClass qclass, bool recursion_desired,
-        std::chrono::milliseconds timeout = 5s) = 0;
+        std::chrono::milliseconds timeout) = 0;
 };
 
 class BasicResolver : public Resolver {
    public:
-    BasicResolver(asio::io_context& io, std::vector<DnsServer> servers = {})
+    explicit BasicResolver(asio::io_context& io,
+                           std::vector<DnsServer> servers = {})
         : io_(io),
-          slist_(servers),
+          slist_(std::move(servers)),
           slist_mutex_(std::make_unique<std::shared_mutex>()) {}
 
-    asio::awaitable<Resolution> resolve(Labels labels, DnsType qtype,
-                                        DnsClass qclass, bool recursion_desired,
-                                        std::chrono::milliseconds timeout = 5s);
+    asio::awaitable<Resolution> resolve(
+        Labels labels, DnsType qtype, DnsClass qclass, bool recursion_desired,
+        std::chrono::milliseconds timeout) override;
 
    private:
     asio::io_context& io_;

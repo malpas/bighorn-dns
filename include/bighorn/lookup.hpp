@@ -1,19 +1,10 @@
 #pragma once
-#include <asio/experimental/awaitable_operators.hpp>
-#include <memory>
-#include <optional>
 #include <span>
-#include <unordered_set>
 
 #include "data.hpp"
 #include "resolver.hpp"
 
 namespace bighorn {
-
-namespace {
-using namespace std::chrono_literals;
-using namespace asio::experimental::awaitable_operators;
-}  // namespace
 
 struct DomainAuthority {
     Labels domain;
@@ -42,8 +33,7 @@ class Lookup {
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
         bool recursive) = 0;
     virtual std::vector<DomainAuthority> find_authorities(
-        std::span<std::string const> labels,
-        DnsClass dclass = DnsClass::In) = 0;
+        std::span<std::string const> labels, DnsClass dclass) = 0;
     virtual bool supports_recursion() = 0;
 };
 

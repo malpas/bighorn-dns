@@ -2,7 +2,7 @@
 
 namespace bighorn {
 
-const char *MessageErrorCategory::name() const noexcept {
+char const *MessageErrorCategory::name() const noexcept {
     return "message_error";
 }
 

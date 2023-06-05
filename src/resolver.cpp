@@ -44,7 +44,7 @@ auto BasicResolver::async_query_server(const DnsServer& server, Message query,
             completion_handler(empty_message, ResolutionError::Timeout);
             return;
         }
-        std::array<uint8_t, 512> response;
+        std::array<uint8_t, 512> response{};
         auto read_future = socket.async_receive_from(
             asio::buffer(response), endpoint, asio::use_future);
         if (read_future.wait_for(timeout) != std::future_status::ready) {
@@ -65,7 +65,7 @@ auto BasicResolver::async_query_server(const DnsServer& server, Message query,
             return;
         }
         if (message.header.rcode == ResponseCode::ServerFailure) {
-            std::unique_lock slist_lock(*slist_mutex_);
+            const std::unique_lock slist_lock(*slist_mutex_);
             auto i = std::find(slist_.begin(), slist_.end(), server);
             slist_.erase(i);
 
@@ -92,7 +92,7 @@ asio::awaitable<Resolution> BasicResolver::resolve(
                          .aa = 0,
                          .tc = 0,
                          .rd = request_recursion ? static_cast<uint8_t>(1)
-                                                 : static_cast<uint8_t>(0u),
+                                                 : static_cast<uint8_t>(0),
                          .ra = 0},
         .questions = {question}};
 
@@ -113,19 +113,19 @@ new_cname:
         std::atomic_int finish_count = 0;
         std::atomic_int success_count = 0;
         {
-            std::shared_lock slist_lock(*slist_mutex_);
+            std::shared_lock const slist_lock(*slist_mutex_);
             for (auto& server : slist_) {
                 ++start_count;
                 async_query_server(
                     server, current_query, timeout,
                     asio::bind_cancellation_slot(
                         found_signal.slot(),
-                        [&](Message message, std::error_code err) {
+                        [&](const Message& message, std::error_code err) {
                             ++finish_count;
                             if (err) {
                                 return;
                             }
-                            std::unique_lock result_lock(result_mutex);
+                            std::unique_lock const result_lock(result_mutex);
                             if (result.has_value()) {
                                 return;
                             }
@@ -137,7 +137,7 @@ new_cname:
             }
         }
         while (start_count != finish_count && success_count == 0) {
-            if (success_count) {
+            if (success_count > 0) {
                 goto finished;
             }
             asio::steady_timer timer(io_);

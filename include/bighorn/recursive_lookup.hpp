@@ -11,14 +11,14 @@ class RecursiveLookup : public Lookup {
 
     asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
-        bool recursive);
+        bool recursive) override;
 
-    std::vector<DomainAuthority> find_authorities(std::span<std::string const>,
-                                                  DnsClass) {
+    std::vector<DomainAuthority> find_authorities(
+        std::span<std::string const> /*labels*/, DnsClass /*dclass*/) override {
         return {};
     }
 
-    bool supports_recursion() { return true; }
+    bool supports_recursion() override { return true; }
 
    private:
     asio::io_context &io_;

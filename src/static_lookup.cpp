@@ -10,9 +10,10 @@ asio::awaitable<FoundRecords> StaticLookup::find_records(
         co_return matching_records;
     }
     for (auto &candidate : records_[labels_to_string(labels)]) {
-        if (qtype != candidate.dtype && qtype != DnsType::All &&
-            !(qtype == DnsType::A && candidate.dtype == DnsType::Cname)) {
-            continue;
+        if (qtype != candidate.dtype && qtype != DnsType::All) {
+            if (qtype != DnsType::A || candidate.dtype != DnsType::Cname) {
+                continue;
+            }
         }
         if (qclass != candidate.dclass) {
             continue;
@@ -22,7 +23,7 @@ asio::awaitable<FoundRecords> StaticLookup::find_records(
         }
         matching_records.push_back(candidate);
     }
-    if (labels.size() >= 2 && wildcard_records_.size() > 0) {
+    if (labels.size() >= 2 && !wildcard_records_.empty()) {
         match_wildcards(labels, qtype, qclass, matching_records);
     }
     co_return FoundRecords{.records = matching_records, .err = {}};
@@ -63,7 +64,7 @@ std::vector<DomainAuthority> StaticLookup::find_authorities(
             unique_auths.push_back(authority);
         }
     }
-    return std::vector(unique_auths.begin(), unique_auths.end());
+    return {unique_auths.begin(), unique_auths.end()};
 }
 
 }  // namespace bighorn

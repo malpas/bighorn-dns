@@ -1,5 +1,4 @@
 #include <lookup.hpp>
-#include <set>
 
 namespace bighorn {
 
@@ -18,7 +17,6 @@ bool is_label_match(std::span<std::string const> labels, const Rr &candidate) {
 bool is_authority_match(const std::span<std::string const> labels,
                         const DomainAuthority &authority,
                         const DnsClass dclass) {
-    bool match = false;
     if (authority.dclass != dclass) {
         return false;
     }
@@ -32,8 +30,7 @@ bool is_authority_match(const std::span<std::string const> labels,
         }
         ++i;
     }
-    match = true;
-    return match;
+    return true;
 }
 
 }  // namespace bighorn

@@ -13,7 +13,7 @@ namespace bighorn {
 
 class DataBuffer {
    public:
-    DataBuffer(std::span<uint8_t const> data)
+    explicit DataBuffer(std::span<uint8_t const> data)
         : data_(data), i_(0), limit_(data.size_bytes()) {}
     DataBuffer(std::span<uint8_t const> data, size_t limit)
         : data_(data), i_(0), limit_(limit) {}
@@ -54,7 +54,7 @@ class DataBuffer {
         return err;
     }
 
-    size_t pos() { return i_; }
+    [[nodiscard]] size_t pos() const { return i_; }
     void seek(size_t i) { i_ = i; }
     void limit(uint8_t limit) { limit_ = limit; }
 

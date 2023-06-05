@@ -10,7 +10,7 @@ namespace bighorn {
 template <std::derived_from<Lookup> L>
 class Responder {
    public:
-    Responder(L lookup) : lookup_(std::move(lookup)) {}
+    explicit Responder(L lookup) : lookup_(std::move(lookup)) {}
 
     asio::awaitable<Message> respond(const Message &query) {
         Message response;
@@ -25,7 +25,7 @@ class Responder {
             response.header.rcode = ResponseCode::Refused;
             co_return response;
         }
-        if (query.questions.size() == 0) {
+        if (query.questions.empty()) {
             co_return response;
         }
         try {
@@ -47,7 +47,7 @@ class Responder {
             }
             if (records.size() == 0) {
                 check_authorities(question, response);
-                if (response.authorities.size() == 0) {
+                if (response.authorities.empty()) {
                     auto all_related_records = co_await lookup_.find_records(
                         question.labels, DnsType::All, question.qclass,
                         recursion_desired);

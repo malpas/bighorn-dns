@@ -35,7 +35,7 @@ class UdpNameServer {
     asio::ip::udp::socket socket_;
     Responder<L> responder_;
     asio::ip::udp::endpoint remote_endpoint_;
-    std::array<uint8_t, 512> data_;
+    std::array<uint8_t, 512> data_{};
 
     asio::awaitable<void> handle_recv() {
         auto bytes_recv = co_await socket_.async_receive_from(
@@ -78,7 +78,7 @@ class UdpNameServer {
                                  static_cast<uint8_t>(request.header.aa),
                                  static_cast<uint8_t>(request.header.tc),
                                  static_cast<uint8_t>(request.header.rd));
-        if (request.questions.size() == 0) {
+        if (request.questions.empty()) {
             std::cout << "- No question\n";
         } else {
             auto question = request.questions[0];

@@ -1,5 +1,4 @@
 #include <asio.hpp>
-#include <format>
 #include <bighorn/recursive_lookup.hpp>
 #include <bighorn/udp.hpp>
 #include <iostream>
@@ -7,22 +6,19 @@
 
 int main() {
     asio::io_context io;
-    auto local_server =
-        bighorn::DnsServer{.ip = 0x7F000001u,
-                            .port = 1044,
+    auto cloudflare_server =
+        bighorn::DnsServer{.ip = 0x01010101U,
                             .conn_method = bighorn::ServerConnMethod::Udp,
                             .recursive = true};
-    auto resolver = bighorn::BasicResolver(io, {local_server});
-    bighorn::RecursiveLookup<bighorn::BasicResolver> lookup(
-        io, std::move(resolver));
-    bighorn::Responder<decltype(lookup)> responder(std::move(lookup));
+    bighorn::BasicResolver resolver(io, {cloudflare_server});
+    bighorn::RecursiveLookup lookup(io, std::move(resolver));
+    bighorn::Responder responder(std::move(lookup));
 
     bighorn::UdpNameServer server(io, 0, std::move(responder));
-
     asio::co_spawn(io, server.start(), asio::detached);
     std::cout << "Started server on port " << server.port() << "\n";
 
-    uint thread_count = std::max(1u, std::thread::hardware_concurrency());
+    uint const thread_count = std::max(1U, std::thread::hardware_concurrency());
     std::vector<std::thread> threads;
     for (uint i = 0; i < thread_count; ++i) {
         std::thread t([&io] { io.run(); });

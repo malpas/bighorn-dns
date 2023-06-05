@@ -61,7 +61,7 @@ TEST(ResolutionTest, Simple) {
     bighorn::Labels example{"abcd", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In, false),
+                                         bighorn::DnsClass::In, false, 5s),
                    [&](std::exception_ptr, auto resolution) {
                        auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
@@ -99,7 +99,7 @@ TEST(ResolutionTest, CnameSwitch) {
     bighorn::Labels example{"alias", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In, false),
+                                         bighorn::DnsClass::In, false, 5s),
                    [&](std::exception_ptr, auto resolution) {
                        auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
@@ -138,7 +138,7 @@ TEST(ResolutionTest, NoInfiniteRecursion) {
     bighorn::Labels example{"a", "com"};
     asio::co_spawn(io,
                    test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In, false),
+                                         bighorn::DnsClass::In, false, 5s),
                    [&](std::exception_ptr, auto) {
                        cancel_server.emit(asio::cancellation_type::terminal);
                    });

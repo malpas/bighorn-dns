@@ -4,12 +4,12 @@
 namespace bighorn {
 class StaticLookup : public Lookup {
    public:
-    StaticLookup() {}
+    StaticLookup() = default;
     asio::awaitable<FoundRecords> find_records(
         std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
-        bool recursive = false);
+        bool recursive) override;
     std::vector<DomainAuthority> find_authorities(
-        std::span<std::string const> labels, DnsClass dclass = DnsClass::In);
+        std::span<std::string const> labels, DnsClass dclass) override;
 
     void add_record(Rr record) {
         records_[labels_to_string(record.labels)].push_back(record);
@@ -19,11 +19,11 @@ class StaticLookup : public Lookup {
         }
     }
 
-    void add_authority(DomainAuthority authority) {
+    void add_authority(const DomainAuthority& authority) {
         authorities_.push_back(authority);
     }
 
-    bool supports_recursion() { return false; }
+    bool supports_recursion() override { return false; }
 
    private:
     std::unordered_map<std::string, std::vector<Rr>> records_;
@@ -31,6 +31,6 @@ class StaticLookup : public Lookup {
     std::vector<DomainAuthority> authorities_;
 
     void match_wildcards(std::span<std::string const> labels, DnsType qtype,
-                         DnsClass qclass, std::vector<Rr> &matching_records);
+                         DnsClass qclass, std::vector<Rr>& matching_records);
 };
 }  // namespace bighorn

@@ -10,4 +10,6 @@ Checks: >
   readability-*,
   -readability-magic-numbers,
   -readability-identifier-length,
-  -modernize-use-trailing-return-type
+  -modernize-use-trailing-return-type,
+  -bugprone-easily-swappable-parameters,
+  -misc-non-private-member-variables-in-classes
