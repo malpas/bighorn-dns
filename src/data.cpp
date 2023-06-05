@@ -41,8 +41,8 @@ std::vector<uint8_t> Rr::bytes() const {
     }
     bytes.push_back(0);
 
-    auto utype = htons(static_cast<uint16_t>(dtype));
-    auto ucls = htons(static_cast<uint16_t>(dclass));
+    auto utype = htons(static_cast<uint16_t>(rtype));
+    auto ucls = htons(static_cast<uint16_t>(rclass));
     bytes.push_back(utype & 0xFF);
     bytes.push_back(utype >> 8);
     bytes.push_back(ucls & 0xFF);
@@ -70,22 +70,22 @@ Rr Rr::a_record(Labels labels, uint32_t ip, uint32_t ttl) {
     rdata.push_back(static_cast<char>(ip >> 8 & 0xFF));
     rdata.push_back(static_cast<char>(ip & 0xFF));
     return Rr{.labels = std::move(labels),
-              .dtype = DnsType::A,
-              .dclass = DnsClass::In,
+              .rtype = RrType::A,
+              .rclass = RrClass::In,
               .ttl = ttl,
               .rdata = rdata};
 }
 
 Rr Rr::aaaa_record(Labels labels, std::array<uint8_t, 16> ip, uint32_t ttl) {
     return Rr{.labels = std::move(labels),
-              .dtype = DnsType::Aaaa,
-              .dclass = DnsClass::In,
+              .rtype = RrType::Aaaa,
+              .rclass = RrClass::In,
               .ttl = ttl,
               .rdata = std::vector<uint8_t>(ip.begin(), ip.end())};
 }
 
 Rr Rr::mx_record(Labels labels, uint16_t preference, Labels exchange,
-                 uint32_t ttl, DnsClass dclass) {
+                 uint32_t ttl, RrClass rclass) {
     std::vector<uint8_t> data;
     preference = htons(preference);
     data.push_back(preference & 0xFF);
@@ -96,14 +96,14 @@ Rr Rr::mx_record(Labels labels, uint16_t preference, Labels exchange,
     }
     data.push_back(0);
     return Rr{.labels = std::move(labels),
-              .dtype = DnsType::Mx,
-              .dclass = dclass,
+              .rtype = RrType::Mx,
+              .rclass = rclass,
               .ttl = ttl,
               .rdata = data};
 }
 
 Rr Rr::ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
-                 DnsClass dclass) {
+                 RrClass rclass) {
     std::vector<uint8_t> rdata;
     for (std::string &label : authority_labels) {
         rdata.push_back(static_cast<char>(label.length()));
@@ -111,14 +111,13 @@ Rr Rr::ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
     }
     rdata.push_back(0);
     return Rr{.labels = std::move(labels),
-              .dtype = DnsType::Ns,
-              .dclass = dclass,
+              .rtype = RrType::Ns,
+              .rclass = rclass,
               .ttl = ttl,
               .rdata = rdata};
 }
 
-Rr Rr::cname_record(Labels labels, Labels cname, uint32_t ttl,
-                    DnsClass dclass) {
+Rr Rr::cname_record(Labels labels, Labels cname, uint32_t ttl, RrClass rclass) {
     std::vector<uint8_t> rdata;
     for (std::string &label : cname) {
         rdata.push_back(static_cast<char>(label.length()));
@@ -126,22 +125,22 @@ Rr Rr::cname_record(Labels labels, Labels cname, uint32_t ttl,
     }
     rdata.push_back(0);
     return Rr{.labels = std::move(labels),
-              .dtype = DnsType::Cname,
-              .dclass = dclass,
+              .rtype = RrType::Cname,
+              .rclass = rclass,
               .ttl = ttl,
               .rdata = rdata};
 }
 
 Rr Rr::hinfo_record(Labels labels, std::string cpu, std::string os,
-                    uint32_t ttl, DnsClass dclass) {
+                    uint32_t ttl, RrClass rclass) {
     std::vector<uint8_t> rdata;
     rdata.push_back(static_cast<uint8_t>(cpu.length()));
     std::copy(cpu.begin(), cpu.end(), std::back_inserter(rdata));
     rdata.push_back(static_cast<uint8_t>(os.length()));
     std::copy(os.begin(), os.end(), std::back_inserter(rdata));
     return Rr{.labels = std::move(labels),
-              .dtype = DnsType::Hinfo,
-              .dclass = dclass,
+              .rtype = RrType::Hinfo,
+              .rclass = rclass,
               .ttl = ttl,
               .rdata = rdata};
 }
@@ -305,13 +304,13 @@ std::error_code read_rr(DataBuffer &buffer, Rr &rr) {
     if (err) {
         return err;
     }
-    rr.dtype = static_cast<DnsType>(bytes);
+    rr.rtype = static_cast<RrType>(bytes);
 
     err = buffer.read_number(bytes);
     if (err) {
         return err;
     }
-    rr.dclass = static_cast<DnsClass>(bytes);
+    rr.rclass = static_cast<RrClass>(bytes);
 
     err = buffer.read_number(rr.ttl);
     if (err) {
@@ -385,8 +384,8 @@ std::error_code read_question(DataBuffer &buffer, Question &question) {
         return err;
     }
     question = Question{.labels = std::move(labels),
-                        .qtype = static_cast<DnsType>(qtype),
-                        .qclass = static_cast<DnsClass>(qclass)};
+                        .qtype = static_cast<RrType>(qtype),
+                        .qclass = static_cast<RrClass>(qclass)};
     return {};
 }
 

@@ -55,8 +55,8 @@ TEST(StandardQueryTest, Example621) {
     auto resolver = get_resolver();
 
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 621,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -85,8 +85,8 @@ TEST(StandardQueryTest, Example622) {
     auto test_records = get_test_records();
 
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
-                                .qtype = bighorn::DnsType::All,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::All,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 622,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -117,8 +117,8 @@ TEST(StandardQueryTest, Example623) {
     auto test_records = get_test_records();
 
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
-                                .qtype = bighorn::DnsType::Mx,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::Mx,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 623,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -150,8 +150,8 @@ TEST(StandardQueryTest, Example624) {
     auto test_records = get_test_records();
 
     bighorn::Question question{.labels = {"sri-nic", "arpa"},
-                                .qtype = bighorn::DnsType::Ns,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::Ns,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 624,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -182,8 +182,8 @@ TEST(StandardQueryTest, Example625) {
     auto test_records = get_test_records();
 
     bighorn::Question question{.labels = {"sir-nic", "arpa"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 625,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -210,8 +210,8 @@ TEST(StandardQueryTest, Example626) {
     auto resolver = get_resolver();
     auto labels = std::vector<std::string>{"brl", "mil"};
     bighorn::Question question{.labels = labels,
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 626,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,

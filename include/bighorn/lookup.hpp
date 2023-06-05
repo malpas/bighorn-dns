@@ -9,7 +9,7 @@ namespace bighorn {
 struct DomainAuthority {
     Labels domain;
     Labels name;
-    DnsClass dclass = DnsClass::In;
+    RrClass rclass = RrClass::In;
     std::vector<uint32_t> ips;
     uint32_t ttl;
 
@@ -20,7 +20,7 @@ bool is_label_match(std::span<std::string const> labels, const Rr &candidate);
 
 bool is_authority_match(std::span<std::string const> labels,
                         const DomainAuthority &authority,
-                        DnsClass dclass = DnsClass::In);
+                        RrClass rclass = RrClass::In);
 
 struct FoundRecords {
     std::vector<Rr> records;
@@ -30,10 +30,10 @@ struct FoundRecords {
 class Lookup {
    public:
     virtual asio::awaitable<FoundRecords> find_records(
-        std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
+        std::span<std::string const> labels, RrType qtype, RrClass qclass,
         bool recursive) = 0;
     virtual std::vector<DomainAuthority> find_authorities(
-        std::span<std::string const> labels, DnsClass dclass) = 0;
+        std::span<std::string const> labels, RrClass rclass) = 0;
     virtual bool supports_recursion() = 0;
 };
 

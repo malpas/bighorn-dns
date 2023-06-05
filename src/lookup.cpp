@@ -16,8 +16,8 @@ bool is_label_match(std::span<std::string const> labels, const Rr &candidate) {
 
 bool is_authority_match(const std::span<std::string const> labels,
                         const DomainAuthority &authority,
-                        const DnsClass dclass) {
-    if (authority.dclass != dclass) {
+                        const RrClass rclass) {
+    if (authority.rclass != rclass) {
         return false;
     }
     if (authority.domain.size() > labels.size()) {

@@ -80,7 +80,7 @@ auto BasicResolver::async_query_server(const DnsServer& server, Message query,
 }
 
 asio::awaitable<Resolution> BasicResolver::resolve(
-    std::vector<std::string> labels, DnsType qtype, DnsClass qclass,
+    std::vector<std::string> labels, RrType qtype, RrClass qclass,
     bool request_recursion, std::chrono::milliseconds timeout) {
     std::vector<Rr> records;
 
@@ -151,7 +151,7 @@ finished:
     }
     auto message = result.value();
     for (auto& answer : message.answers) {
-        if (answer.dtype == DnsType::Cname) {
+        if (answer.rtype == RrType::Cname) {
             Labels cname;
             DataBuffer buffer(answer.rdata);
             auto err = read_labels(buffer, cname);

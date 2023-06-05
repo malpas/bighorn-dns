@@ -15,7 +15,7 @@ TEST(ResponderTest, RecursionNotSupportedByLookup) {
     Responder responder(std::move(lookup));
 
     Question question{
-        .labels = {"a", "com"}, .qtype = DnsType::A, .qclass = DnsClass::In};
+        .labels = {"a", "com"}, .qtype = RrType::A, .qclass = RrClass::In};
     Message query{.header = {.id = 100, .opcode = Opcode::Query, .rd = 1},
                   .questions = {question}};
     asio::co_spawn(io, responder.respond(query),
@@ -29,14 +29,14 @@ TEST(ResponderTest, RecursionNotSupportedByLookup) {
 class RefusalLookup : public Lookup {
    public:
     asio::awaitable<FoundRecords> find_records(
-        std::span<std::string const> /*labels*/, DnsType /*qtype*/,
-        DnsClass /*qclass*/, bool /*recursive*/ = false) {
+        std::span<std::string const> /*labels*/, RrType /*qtype*/,
+        RrClass /*qclass*/, bool /*recursive*/ = false) {
         co_return FoundRecords{.records = {},
                                .err = ResolutionError::RemoteRefused};
     }
     std::vector<DomainAuthority> find_authorities(
         std::span<std::string const> /*labels*/,
-        DnsClass /*dclass*/ = DnsClass::In) {
+        RrClass /*rclass*/ = RrClass::In) {
         return {};
     };
 
@@ -49,8 +49,8 @@ TEST(ResponderTest, LookupReturnedRefused) {
     bighorn::Responder responder(lookup);
 
     bighorn::Question question{.labels = {"a", "com"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message query{
         .header = {.id = 100, .opcode = bighorn::Opcode::Query, .rd = 1},
         .questions = {question}};

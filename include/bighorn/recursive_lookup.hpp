@@ -10,11 +10,11 @@ class RecursiveLookup : public Lookup {
         : io_(io), resolver_(std::move(resolver)), timeout_(timeout) {}
 
     asio::awaitable<FoundRecords> find_records(
-        std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
+        std::span<std::string const> labels, RrType qtype, RrClass qclass,
         bool recursive) override;
 
     std::vector<DomainAuthority> find_authorities(
-        std::span<std::string const> /*labels*/, DnsClass /*dclass*/) override {
+        std::span<std::string const> /*labels*/, RrClass /*rclass*/) override {
         return {};
     }
 
@@ -28,7 +28,7 @@ class RecursiveLookup : public Lookup {
 
 template <std::derived_from<Resolver> R>
 inline asio::awaitable<FoundRecords> RecursiveLookup<R>::find_records(
-    std::span<std::string const> labels, DnsType qtype, DnsClass qclass,
+    std::span<std::string const> labels, RrType qtype, RrClass qclass,
     bool /*recursive*/) {
     Labels label_vec(labels.begin(), labels.end());
     Resolution resolution =

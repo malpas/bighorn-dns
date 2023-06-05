@@ -16,10 +16,10 @@ using asio::ip::tcp;
 using namespace std::chrono_literals;
 
 bool is_a_record(const bighorn::Rr& record) {
-    return record.dtype == bighorn::DnsType::A;
+    return record.rtype == bighorn::RrType::A;
 }
 bool is_aaaa_record(const bighorn::Rr& record) {
-    return record.dtype == bighorn::DnsType::Aaaa;
+    return record.rtype == bighorn::RrType::Aaaa;
 }
 
 using ServerType = bighorn::UdpNameServer<bighorn::StaticLookup>;
@@ -60,8 +60,8 @@ TEST(ResolutionTest, Simple) {
     bighorn::BasicResolver test_resolver(io, {server_ref});
     bighorn::Labels example{"abcd", "com"};
     asio::co_spawn(io,
-                   test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In, false, 5s),
+                   test_resolver.resolve(example, bighorn::RrType::All,
+                                         bighorn::RrClass::In, false, 5s),
                    [&](std::exception_ptr, auto resolution) {
                        auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
@@ -98,8 +98,8 @@ TEST(ResolutionTest, CnameSwitch) {
     bighorn::BasicResolver test_resolver(io, {server});
     bighorn::Labels example{"alias", "com"};
     asio::co_spawn(io,
-                   test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In, false, 5s),
+                   test_resolver.resolve(example, bighorn::RrType::All,
+                                         bighorn::RrClass::In, false, 5s),
                    [&](std::exception_ptr, auto resolution) {
                        auto records = resolution.records;
                        std::vector<bighorn::Rr> a_records;
@@ -137,8 +137,8 @@ TEST(ResolutionTest, NoInfiniteRecursion) {
     bighorn::BasicResolver test_resolver(io, {server});
     bighorn::Labels example{"a", "com"};
     asio::co_spawn(io,
-                   test_resolver.resolve(example, bighorn::DnsType::All,
-                                         bighorn::DnsClass::In, false, 5s),
+                   test_resolver.resolve(example, bighorn::RrType::All,
+                                         bighorn::RrClass::In, false, 5s),
                    [&](std::exception_ptr, auto) {
                        cancel_server.emit(asio::cancellation_type::terminal);
                    });
@@ -171,8 +171,8 @@ TEST(ResolutionTest, ResponderWithRecursiveLookup) {
     bighorn::Responder<decltype(test_lookup)> responder(
         std::move(test_lookup));
     bighorn::Question question{.labels = {"a", "com"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message query{
         .header = {.id = 100, .opcode = bighorn::Opcode::Query, .rd = 1},
         .questions = {question}};

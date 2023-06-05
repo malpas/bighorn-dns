@@ -12,7 +12,7 @@
 
 namespace bighorn {
 
-enum class DnsType : uint16_t {
+enum class RrType : uint16_t {
     A = 1,
     Ns = 2,
     Md = 3,
@@ -36,7 +36,7 @@ enum class DnsType : uint16_t {
     All = 255,    // QTYPE
 };
 
-enum class DnsClass : uint16_t { In = 1, Cs = 2, Ch = 3, Hs = 4 };
+enum class RrClass : uint16_t { In = 1, Cs = 2, Ch = 3, Hs = 4 };
 
 enum class ResponseCode : uint8_t {
     Ok = 0,
@@ -57,8 +57,8 @@ std::string labels_to_string(std::span<std::string const> labels);
 
 struct Rr {
     std::vector<std::string> labels;
-    DnsType dtype;
-    DnsClass dclass;
+    RrType rtype;
+    RrClass rclass;
     uint32_t ttl;
     std::vector<uint8_t> rdata;
 
@@ -69,13 +69,13 @@ struct Rr {
     static Rr aaaa_record(Labels labels, std::array<uint8_t, 16> ip,
                           uint32_t ttl);
     static Rr mx_record(Labels labels, uint16_t preference, Labels exchange,
-                        uint32_t ttl, DnsClass dclass = DnsClass::In);
+                        uint32_t ttl, RrClass rclass = RrClass::In);
     static Rr ns_record(Labels labels, Labels authority_labels, uint32_t ttl,
-                        DnsClass dclass = DnsClass::In);
+                        RrClass rclass = RrClass::In);
     static Rr cname_record(Labels labels, Labels cname, uint32_t ttl,
-                           DnsClass dclass = DnsClass::In);
+                           RrClass rclass = RrClass::In);
     static Rr hinfo_record(Labels labels, std::string cpu, std::string os,
-                           uint32_t ttl, DnsClass dclass = DnsClass::In);
+                           uint32_t ttl, RrClass rclass = RrClass::In);
 };
 
 [[nodiscard]] std::error_code read_labels(DataBuffer &buffer,
@@ -110,8 +110,8 @@ struct Header {
 
 struct Question {
     std::vector<std::string> labels;
-    DnsType qtype;
-    DnsClass qclass;
+    RrType qtype;
+    RrClass qclass;
     auto operator<=>(const Question &) const = default;
     [[nodiscard]] std::vector<uint8_t> bytes() const;
 };

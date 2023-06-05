@@ -33,7 +33,7 @@ struct Resolution {
 class Resolver {
    public:
     virtual asio::awaitable<Resolution> resolve(
-        Labels labels, DnsType qtype, DnsClass qclass, bool recursion_desired,
+        Labels labels, RrType qtype, RrClass qclass, bool recursion_desired,
         std::chrono::milliseconds timeout) = 0;
 };
 
@@ -46,7 +46,7 @@ class BasicResolver : public Resolver {
           slist_mutex_(std::make_unique<std::shared_mutex>()) {}
 
     asio::awaitable<Resolution> resolve(
-        Labels labels, DnsType qtype, DnsClass qclass, bool recursion_desired,
+        Labels labels, RrType qtype, RrClass qclass, bool recursion_desired,
         std::chrono::milliseconds timeout) override;
 
    private:

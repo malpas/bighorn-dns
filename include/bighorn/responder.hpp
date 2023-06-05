@@ -41,7 +41,7 @@ class Responder {
             auto records = found_records.records;
             std::copy(records.begin(), records.end(),
                       std::back_inserter(response.answers));
-            if (question.qtype == DnsType::Mx) {
+            if (question.qtype == RrType::Mx) {
                 co_await add_additional_records_for_mx(
                     question.labels, response, recursion_desired);
             }
@@ -49,7 +49,7 @@ class Responder {
                 check_authorities(question, response);
                 if (response.authorities.empty()) {
                     auto all_related_records = co_await lookup_.find_records(
-                        question.labels, DnsType::All, question.qclass,
+                        question.labels, RrType::All, question.qclass,
                         recursion_desired);
                     if (all_related_records.records.size() == 0) {
                         response.header.rcode = ResponseCode::NameError;
@@ -73,7 +73,7 @@ class Responder {
         std::span<std::string const> labels, Message &response,
         bool recursive) {
         auto found_records = co_await lookup_.find_records(
-            labels, DnsType::A, DnsClass::In, recursive);
+            labels, RrType::A, RrClass::In, recursive);
         for (auto &record : found_records.records) {
             response.additional.push_back(record);
         }

@@ -11,8 +11,8 @@ TEST(WildcardTest, Basic) {
     auto responder =
         bighorn::Responder<bighorn::StaticLookup>(std::move(lookup));
     bighorn::Question question{.labels = {"a", "example", "com"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 1,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -39,12 +39,12 @@ TEST(WildcardTest, MustMatchClass) {
     bighorn::StaticLookup lookup;
     lookup.add_record(bighorn::Rr::mx_record({"*", "example", "com"}, 0,
                                               {"example", "com"}, 86400,
-                                              bighorn::DnsClass::Ch));
+                                              bighorn::RrClass::Ch));
     auto responder =
         bighorn::Responder<bighorn::StaticLookup>(std::move(lookup));
     bighorn::Question question{.labels = {"a", "example", "com"},
-                                .qtype = bighorn::DnsType::Mx,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::Mx,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 1,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -66,12 +66,12 @@ TEST(WildcardTest, MustMatchType) {
     bighorn::StaticLookup lookup;
     lookup.add_record(bighorn::Rr::mx_record({"*", "example", "com"}, 0,
                                               {"example", "com"}, 86400,
-                                              bighorn::DnsClass::In));
+                                              bighorn::RrClass::In));
     auto responder =
         bighorn::Responder<bighorn::StaticLookup>(std::move(lookup));
     bighorn::Question question{.labels = {"a", "example", "com"},
-                                .qtype = bighorn::DnsType::Hinfo,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::Hinfo,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 1,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,
@@ -97,8 +97,8 @@ TEST(WildcardTest, MultipleLabelMatch) {
         bighorn::Responder<bighorn::StaticLookup>(std::move(lookup));
     bighorn::Question question{
         .labels = {"a", "b", "c", "d", "example", "com"},
-        .qtype = bighorn::DnsType::A,
-        .qclass = bighorn::DnsClass::In};
+        .qtype = bighorn::RrType::A,
+        .qclass = bighorn::RrClass::In};
     bighorn::Message msg{.header = {.id = 1,
                                      .qr = 0,
                                      .opcode = bighorn::Opcode::Query,

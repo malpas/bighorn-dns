@@ -31,8 +31,8 @@ TEST(UnreliableServerTest, VerySlowServer) {
     bighorn::Responder<decltype(test_lookup)> responder(
         std::move(test_lookup));
     bighorn::Question question{.labels = {"a", "com"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     bighorn::Message query{
         .header = {.id = 100, .opcode = bighorn::Opcode::Query, .rd = 1},
         .questions = {question}};

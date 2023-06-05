@@ -8,8 +8,8 @@
 TEST(PointerTest, ReadPointerToQuestion) {
     std::vector<uint8_t> pre_bytes{'#', '#', '#', '#'};
     bighorn::Question question{.labels = {"example", "com"},
-                                .qtype = bighorn::DnsType::A,
-                                .qclass = bighorn::DnsClass::In};
+                                .qtype = bighorn::RrType::A,
+                                .qclass = bighorn::RrClass::In};
     auto question_bytes = question.bytes();
 
     std::vector<uint8_t> message_bytes = pre_bytes;
