@@ -11,7 +11,7 @@ void run_server(const bighorn::IpType& remote_ip, int port, int remote_port,
 bighorn::IpType parse_ip(std::string ip_str);
 
 int main(int argc, char* argv[]) {
-    argparse::ArgumentParser program("example_basic");
+    argparse::ArgumentParser program("example_recursive");
     program.add_argument("--port")
         .help("port to use (any port by default)")
         .scan<'i', int>()
